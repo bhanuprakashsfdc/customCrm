@@ -1,11 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  getStorage,
-  setStorage,
-  StorageData,
-  clearStorage,
-  getDefaultData,
-} from '@/src/lib/storage';
+import { StorageData } from '@/src/lib/storage';
+
+const API_BASE = '/api';
 
 interface DataContextType {
   data: StorageData;
@@ -13,8 +9,8 @@ interface DataContextType {
   contacts: any[];
   leads: any[];
   opportunities: any[];
-  saveRecord: (type: keyof StorageData, record: any) => void;
-  deleteRecord: (type: keyof StorageData, id: string) => void;
+  saveRecord: (type: keyof StorageData, record: any) => Promise<void>;
+  deleteRecord: (type: keyof StorageData, id: string) => Promise<void>;
   getRecord: (type: keyof StorageData, id: string) => any;
   getRelated: (parentType: string, parentId: string, childType: string, relationshipField: string) => any[];
   getAccountContacts: (accountId: string) => any[];
@@ -24,49 +20,111 @@ interface DataContextType {
   getContactAccount: (contactId: string) => any;
   getLeadAccount: (leadId: string) => any;
   getAccountName: (accountId: string | undefined) => string;
-  refreshData: () => void;
-  resetToDefault: () => void;
+  refreshData: () => Promise<void>;
+  loading: boolean;
+  error: string | null;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-export function DataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<StorageData>(() => {
-    const stored = getStorage();
-    if (Object.keys(stored.accounts).length === 0) {
-      const defaultData = getDefaultData();
-      setStorage(defaultData);
-      return defaultData;
-    }
-    return stored;
-  });
+const defaultData: StorageData = {
+  accounts: {},
+  contacts: {},
+  leads: {},
+  opportunities: {},
+  tasks: {},
+  events: {},
+  campaigns: {},
+  quotes: {},
+  orders: {},
+  contracts: {},
+  products: {},
+  users: {},
+  lastUpdated: new Date().toISOString(),
+};
 
-  const refreshData = () => {
-    setData(getStorage());
+export function DataProvider({ children }: { children: ReactNode }) {
+  const [data, setData] = useState<StorageData>(defaultData);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tables = ['accounts', 'contacts', 'leads', 'opportunities', 'tasks', 'events', 'campaigns', 'quotes', 'orders', 'contracts', 'products', 'users'];
+      const newData: StorageData = { ...defaultData };
+      
+      for (const table of tables) {
+        const response = await fetch(`${API_BASE}/${table}`);
+        if (response.ok) {
+          const rows = await response.json();
+          (newData[table as keyof StorageData] as Record<string, any>) = {};
+          rows.forEach((row: any) => {
+            newData[table as keyof StorageData][row.id] = row;
+          });
+        }
+      }
+      
+      newData.lastUpdated = new Date().toISOString();
+      setData(newData);
+    } catch (err) {
+      setError('Failed to connect to database. Make sure server is running on port 3001');
+      console.error('Error fetching data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
   const generateId = () => {
     return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const saveRecord = (type: keyof StorageData, record: any) => {
-    const currentData = getStorage();
+  const saveRecord = async (type: keyof StorageData, record: any) => {
     const recordWithId = {
       ...record,
       id: record.id || generateId(),
       createdAt: record.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    (currentData[type] as Record<string, any>)[recordWithId.id] = recordWithId;
-    setStorage(currentData);
-    setData(currentData);
+
+    try {
+      const response = await fetch(`${API_BASE}/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(recordWithId),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save record');
+      }
+
+      await fetchAllData();
+    } catch (err) {
+      console.error('Error saving record:', err);
+      throw err;
+    }
   };
 
-  const deleteRecord = (type: keyof StorageData, id: string) => {
-    const currentData = getStorage();
-    delete (currentData[type] as Record<string, any>)[id];
-    setStorage(currentData);
-    setData(currentData);
+  const deleteRecord = async (type: keyof StorageData, id: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/${type}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete record');
+      }
+
+      await fetchAllData();
+    } catch (err) {
+      console.error('Error deleting record:', err);
+      throw err;
+    }
   };
 
   const getRecord = (type: keyof StorageData, id: string): any => {
@@ -91,7 +149,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return getRelated('accounts', accountId, 'opportunities', 'accountId');
   };
 
-const getContactOpportunities = (contactId: string): any[] => {
+  const getContactOpportunities = (contactId: string): any[] => {
     return getRelated('contacts', contactId, 'opportunities', 'contactId');
   };
 
@@ -130,10 +188,8 @@ const getContactOpportunities = (contactId: string): any[] => {
   const leads = Object.values(data.leads);
   const opportunities = Object.values(data.opportunities);
 
-  const resetToDefault = () => {
-    const defaultData = getDefaultData();
-    setStorage(defaultData);
-    setData(defaultData);
+  const refreshData = async () => {
+    await fetchAllData();
   };
 
   return (
@@ -156,7 +212,8 @@ const getContactOpportunities = (contactId: string): any[] => {
         getLeadAccount,
         getAccountName,
         refreshData,
-        resetToDefault,
+        loading,
+        error,
       }}
     >
       {children}
