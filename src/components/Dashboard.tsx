@@ -15,12 +15,12 @@ const growthData = [
 
 export default function Dashboard() {
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
       {/* Header Section */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
         <div>
-          <h2 className="text-4xl font-extrabold font-headline tracking-tight text-white">Executive Oversight</h2>
-          <p className="text-on-surface-variant mt-1">Global performance metrics for Nexus AI Intelligence.</p>
+          <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Executive Oversight</h2>
+          <p className="text-on-surface-variant mt-1 text-sm">Global performance metrics for Nexus AI Intelligence.</p>
         </div>
         <div className="flex gap-2">
           <button className="px-4 py-2 bg-surface-container-high text-white text-xs font-bold rounded-lg hover:bg-surface-bright transition-colors">DAILY</button>
@@ -29,7 +29,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Revenue Card */}
         <div className="bg-surface-container-low p-6 rounded-[1.5rem] relative overflow-hidden group border border-white/5">
           <div className="flex justify-between items-start mb-4">
@@ -85,16 +85,16 @@ export default function Dashboard() {
       </div>
 
       {/* Growth Outlook Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface-container p-8 rounded-[1.5rem] border border-white/5 relative overflow-hidden">
-          <div className="flex justify-between items-center mb-12">
-            <h4 className="text-xl font-bold font-headline text-white">Growth Outlook</h4>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="lg:col-span-2 bg-surface-container p-4 lg:p-8 rounded-[1.5rem] border border-white/5 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 lg:mb-12">
+            <h4 className="text-lg lg:text-xl font-bold font-headline text-white">Growth Outlook</h4>
             <div className="flex gap-4 text-xs font-medium text-slate-400">
               <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary" /> Predicted</span>
-              <span className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-slate-600" /> Actual</span>
+              <span className="flex items-center gap-2 hidden sm:inline"><span className="w-3 h-3 rounded-full bg-slate-600" /> Actual</span>
             </div>
           </div>
-          <div className="h-64 relative">
+          <div className="h-48 lg:h-64 relative">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={growthData}>
                 <defs>
@@ -126,8 +126,8 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Intelligence Timeline */}
-        <div className="bg-surface-container-low p-8 rounded-[1.5rem] border border-white/5">
-          <h4 className="text-xl font-bold font-headline text-white mb-6">Recent Intelligence</h4>
+        <div className="bg-surface-container-low p-4 lg:p-8 rounded-[1.5rem] border border-white/5">
+          <h4 className="text-lg lg:text-xl font-bold font-headline text-white mb-4 lg:mb-6">Recent Intelligence</h4>
           <div className="space-y-6">
             <IntelligenceItem 
               icon={<Bolt className="w-4 h-4 text-tertiary" />}
@@ -156,9 +156,9 @@ export default function Dashboard() {
       </div>
 
       {/* AI Insights Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 glass-panel p-8 rounded-[1.5rem] border border-white/10 shadow-[0_0_50px_-12px_rgba(192,193,255,0.1)]">
-          <div className="flex items-center gap-3 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="lg:col-span-1 glass-panel p-4 lg:p-8 rounded-[1.5rem] border border-white/10 shadow-[0_0_50px_-12px_rgba(192,193,255,0.1)]">
+          <div className="flex items-center gap-3 mb-4 lg:mb-6">
             <Bolt className="w-5 h-5 text-tertiary fill-current" />
             <h4 className="text-lg font-bold font-headline text-white">Next Best Actions</h4>
           </div>
@@ -180,9 +180,9 @@ export default function Dashboard() {
         </div>
 
         {/* Top Deals Grid */}
-        <div className="lg:col-span-3 bg-surface-container-low p-8 rounded-[1.5rem] border border-white/5">
-          <div className="flex justify-between items-center mb-8">
-            <h4 className="text-xl font-bold font-headline text-white">Top Deals in Flight</h4>
+        <div className="lg:col-span-3 bg-surface-container-low p-4 lg:p-8 rounded-[1.5rem] border border-white/5">
+          <div className="flex justify-between items-center mb-4 lg:mb-8">
+            <h4 className="text-lg lg:text-xl font-bold font-headline text-white">Top Deals in Flight</h4>
             <button className="text-sm text-primary font-semibold flex items-center gap-1">Open Pipeline <ArrowRight className="w-4 h-4" /></button>
           </div>
           <div className="overflow-x-auto">
@@ -227,7 +227,31 @@ export default function Dashboard() {
   );
 }
 
-function IntelligenceItem({ icon, title, description, time, color }: any) {
+interface IntelligenceItemProps {
+  icon: React.ReactNode;
+  title: string;
+  description: React.ReactNode;
+  time: string;
+  color: 'tertiary' | 'primary' | 'slate';
+}
+
+interface ActionCardProps {
+  tag: string;
+  tagColor: 'tertiary' | 'primary';
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+}
+
+interface DealRowProps {
+  account: string;
+  value: string;
+  stage: string;
+  health: number;
+  ownerImg: string;
+}
+
+function IntelligenceItem({ icon, title, description, time, color }: IntelligenceItemProps) {
   return (
     <div className="flex gap-4 relative">
       <div className="absolute left-[15px] top-10 bottom-0 w-[1px] bg-white/5" />
@@ -246,7 +270,7 @@ function IntelligenceItem({ icon, title, description, time, color }: any) {
   );
 }
 
-function ActionCard({ tag, tagColor, title, description, icon }: any) {
+function ActionCard({ tag, tagColor, title, description, icon }: ActionCardProps) {
   return (
     <div className="p-4 rounded-xl bg-surface-container-highest/40 border border-white/5 hover:border-primary/30 transition-colors cursor-pointer group">
       <div className="flex items-center justify-between mb-2">
@@ -262,7 +286,7 @@ function ActionCard({ tag, tagColor, title, description, icon }: any) {
   );
 }
 
-function DealRow({ account, value, stage, health, ownerImg }: any) {
+function DealRow({ account, value, stage, health, ownerImg }: DealRowProps) {
   return (
     <tr className="hover:bg-white/5 transition-colors group">
       <td className="py-5 px-4 font-bold text-white">{account}</td>
