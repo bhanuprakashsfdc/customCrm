@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ConfigProvider } from './context/ConfigContext';
+import { DataProvider } from './context/DataContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import LeadPipeline from './components/LeadPipeline';
@@ -12,7 +13,9 @@ import CasePipeline from './components/CasePipeline';
 export default function App() {
   return (
     <ConfigProvider>
-      <AppContent />
+      <DataProvider>
+        <AppContent />
+      </DataProvider>
     </ConfigProvider>
   );
 }

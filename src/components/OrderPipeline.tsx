@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   ShoppingCart, 
@@ -14,14 +15,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import RecordModal from './RecordModal';
-
-const orderData = [
-  { id: '1', orderNumber: 'ORD-2026-001', accountName: 'Acme Corporation', type: 'New', status: 'Completed', items: 5, totalAmount: 45000, effectiveDate: '2026-04-01', createdDate: '2026-03-28' },
-  { id: '2', orderNumber: 'ORD-2026-002', accountName: 'TechStart Inc', type: 'New', status: 'In Progress', items: 12, totalAmount: 128500, effectiveDate: '2026-04-15', createdDate: '2026-04-10' },
-  { id: '3', orderNumber: 'ORD-2026-003', accountName: 'Global Systems Ltd', type: 'Renewal', status: 'Activated', items: 8, totalAmount: 89000, effectiveDate: '2026-04-20', createdDate: '2026-04-18' },
-  { id: '4', orderNumber: 'ORD-2026-004', accountName: 'InnovateTech', type: 'Amendment', status: 'Draft', items: 3, totalAmount: 15500, effectiveDate: '2026-05-01', createdDate: '2026-04-12' },
-  { id: '5', orderNumber: 'ORD-2025-156', accountName: 'DataFlow Analytics', type: 'New', status: 'Cancelled', items: 6, totalAmount: 67000, effectiveDate: '2026-03-15', createdDate: '2026-03-10' },
-];
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -41,19 +34,29 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function OrderPipeline() {
   const { config } = useConfig();
+  const { data, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
-  const filteredOrders = filter === 'all' 
-    ? orderData 
-    : orderData.filter(o => o.status.toLowerCase() === filter.toLowerCase());
+  const orders = Object.values(data.orders);
 
-  const totalRevenue = orderData.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.totalAmount, 0);
-  const completedOrders = orderData.filter(o => o.status === 'Completed').length;
-  const activeOrders = orderData.filter(o => o.status === 'Activated' || o.status === 'In Progress').length;
+  const filteredOrders = filter === 'all' 
+    ? orders 
+    : orders.filter(o => (o.status || '').toLowerCase() === filter.toLowerCase());
+
+  const totalRevenue = orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+  const completedOrders = orders.filter(o => o.status === 'Completed').length;
+  const activeOrders = orders.filter(o => o.status === 'Activated' || o.status === 'In Progress').length;
 
   const handleSave = (data: any) => {
-    console.log('New Order:', data);
+    const record = {
+      accountId: data.accountId,
+      type: data.type,
+      status: data.status,
+      effectiveDate: data.effectiveDate,
+      ownerId: 'user_001',
+    };
+    saveRecord('orders', record);
   };
 
   return (
@@ -91,7 +94,7 @@ export default function OrderPipeline() {
             <ShoppingCart className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Orders</span>
           </div>
-          <p className="text-2xl font-bold text-white">{orderData.length}</p>
+          <p className="text-2xl font-bold text-white">{orders.length}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -153,7 +156,7 @@ export default function OrderPipeline() {
                       <span className="font-semibold text-white">{order.orderNumber}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-white">{order.accountName}</td>
+                  <td className="p-4 text-white">{getAccountName(order.accountId)}</td>
                   <td className="p-4 text-slate-400">{order.type}</td>
                   <td className="p-4">
                     <span className={cn("px-3 py-1 text-xs font-bold rounded-full flex items-center gap-1 w-fit", statusColors[order.status])}>
@@ -161,10 +164,10 @@ export default function OrderPipeline() {
                       {order.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">{order.items}</td>
-                  <td className="p-4 text-white">${order.totalAmount.toLocaleString()}</td>
-                  <td className="p-4 text-slate-400">{order.effectiveDate}</td>
-                  <td className="p-4 text-slate-400">{order.createdDate}</td>
+                  <td className="p-4 text-white">-</td>
+                  <td className="p-4 text-white">${(order.totalAmount || 0).toLocaleString()}</td>
+                  <td className="p-4 text-slate-400">{order.effectiveDate || '-'}</td>
+                  <td className="p-4 text-slate-400">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '-'}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">
                       <MoreHorizontal className="w-4 h-4" />

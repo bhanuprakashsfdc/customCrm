@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Handshake, 
@@ -15,21 +16,11 @@ import {
 } from 'lucide-react';
 import RecordModal from './RecordModal';
 
-const opportunityData = [
-  { id: '1', name: 'Acme Enterprise Deal', accountName: 'Acme Corporation', type: 'New Business', stage: 'Proposal', amount: 250000, probability: 85, closeDate: '2026-04-30', isClosed: false, isWon: false, owner: 'John Doe' },
-  { id: '2', name: 'TechStart Expansion', accountName: 'TechStart Inc', type: 'Upsell', stage: 'Negotiation', amount: 125000, probability: 90, closeDate: '2026-04-25', isClosed: false, isWon: false, owner: 'Sarah Johnson' },
-  { id: '3', name: 'Global Systems Renewal', accountName: 'Global Systems Ltd', type: 'Renewal', stage: 'Closed Won', amount: 175000, probability: 100, closeDate: '2026-03-31', isClosed: true, isWon: true, owner: 'Mike Wilson' },
-  { id: '4', name: 'InnovateTech Implementation', accountName: 'InnovateTech', type: 'New Business', stage: 'Qualification', amount: 85000, probability: 25, closeDate: '2026-05-15', isClosed: false, isWon: false, owner: 'Lisa Chen' },
-  { id: '5', name: 'DataFlow Analytics Platform', accountName: 'DataFlow Analytics', type: 'New Business', stage: 'Needs Analysis', amount: 320000, probability: 50, closeDate: '2026-05-30', isClosed: false, isWon: false, owner: 'David Lee' },
-  { id: '6', name: 'CloudNine Partnership', accountName: 'CloudNine Systems', type: 'Existing Business', stage: 'Closed Lost', amount: 95000, probability: 0, closeDate: '2026-03-15', isClosed: true, isWon: false, owner: 'Emma Davis' },
-  { id: '7', name: 'Alpha Industries Pilot', accountName: 'Alpha Industries', type: 'New Business', stage: 'Prospecting', amount: 45000, probability: 10, closeDate: '2026-06-15', isClosed: false, isWon: false, owner: 'Tom Brown' },
-  { id: '8', name: 'Beta Ventures Platform', accountName: 'Beta Ventures', type: 'New Business', stage: 'Decision Makers', amount: 180000, probability: 75, closeDate: '2026-04-20', isClosed: false, isWon: false, owner: 'Anna Martinez' },
-];
-
 const stageColors: Record<string, string> = {
   'Prospecting': 'bg-slate-500/20 text-slate-400',
   'Qualification': 'bg-blue-500/20 text-blue-400',
   'Needs Analysis': 'bg-indigo-500/20 text-indigo-400',
+  'Value Proposition': 'bg-violet-500/20 text-violet-400',
   'Proposal': 'bg-purple-500/20 text-purple-400',
   'Negotiation': 'bg-amber-500/20 text-amber-400',
   'Decision Makers': 'bg-cyan-500/20 text-cyan-400',
@@ -46,24 +37,38 @@ const typeColors: Record<string, string> = {
 
 export default function DealPipeline() {
   const { config } = useConfig();
+  const { opportunities, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredOpportunities = filter === 'all' 
-    ? opportunityData 
+    ? opportunities 
     : filter === 'Active'
-      ? opportunityData.filter(o => !o.isClosed)
+      ? opportunities.filter(o => !o.isClosed)
       : filter === 'Closed'
-        ? opportunityData.filter(o => o.isClosed)
-        : opportunityData.filter(o => o.stage === filter);
+        ? opportunities.filter(o => o.isClosed)
+        : opportunities.filter(o => o.stageName === filter);
 
-  const totalAmount = opportunityData.reduce((sum, o) => sum + o.amount, 0);
-  const openAmount = opportunityData.filter(o => !o.isClosed).reduce((sum, o) => sum + o.amount, 0);
-  const wonAmount = opportunityData.filter(o => o.isWon).reduce((sum, o) => sum + o.amount, 0);
-  const winRate = (opportunityData.filter(o => o.isClosed && o.isWon).length / opportunityData.filter(o => o.isClosed).length * 100).toFixed(0);
+  const totalAmount = opportunities.reduce((sum, o) => sum + (o.amount || 0), 0);
+  const openAmount = opportunities.filter(o => !o.isClosed).reduce((sum, o) => sum + (o.amount || 0), 0);
+  const wonAmount = opportunities.filter(o => o.isWon).reduce((sum, o) => sum + (o.amount || 0), 0);
+  const closedOpps = opportunities.filter(o => o.isClosed);
+  const winRate = closedOpps.length > 0 ? (closedOpps.filter(o => o.isWon).length / closedOpps.length * 100).toFixed(0) : '0';
 
   const handleSave = (data: any) => {
-    console.log('New Opportunity:', data);
+    const record = {
+      name: data.name,
+      accountId: data.accountId,
+      type: data.type,
+      stageName: data.stage,
+      amount: parseFloat(data.amount) || 0,
+      probability: data.stage === 'Closed Won' ? 100 : data.stage === 'Closed Lost' ? 0 : 50,
+      closeDate: data.closeDate,
+      isClosed: data.stage === 'Closed Won' || data.stage === 'Closed Lost',
+      isWon: data.stage === 'Closed Won',
+      ownerId: 'user_001',
+    };
+    saveRecord('opportunities', record);
   };
 
   return (
@@ -101,7 +106,7 @@ export default function DealPipeline() {
             <Handshake className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Open Deals</span>
           </div>
-          <p className="text-2xl font-bold text-white">{opportunityData.filter(o => !o.isClosed).length}</p>
+          <p className="text-2xl font-bold text-white">{opportunities.filter(o => !o.isClosed).length}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -163,21 +168,21 @@ export default function DealPipeline() {
                       <span className="font-semibold text-white">{opp.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-white">{opp.accountName}</td>
+                  <td className="p-4 text-white">{getAccountName(opp.accountId)}</td>
                   <td className="p-4">
                     <span className={cn("px-3 py-1 text-xs font-bold rounded-full", typeColors[opp.type])}>
                       {opp.type}
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", stageColors[opp.stage])}>
-                      {opp.stage}
+                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", stageColors[opp.stageName])}>
+                      {opp.stageName}
                     </span>
                   </td>
-                  <td className="p-4 text-white font-bold">${opp.amount.toLocaleString()}</td>
+                  <td className="p-4 text-white font-bold">${(opp.amount || 0).toLocaleString()}</td>
                   <td className="p-4 text-white">{opp.probability}%</td>
                   <td className="p-4 text-slate-400">{opp.closeDate}</td>
-                  <td className="p-4 text-slate-400">{opp.owner}</td>
+                  <td className="p-4 text-slate-400">{opp.ownerId}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">
                       <MoreHorizontal className="w-4 h-4" />

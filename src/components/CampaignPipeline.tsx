@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Megaphone, 
@@ -15,14 +16,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
-const campaignData = [
-  { id: '1', name: 'Q2 Product Launch', type: 'Conference', status: 'In Progress', budget: 45000, leads: 1250, contacts: 450, converted: 89, revenue: 285000, startDate: '2026-04-01', endDate: '2026-06-30' },
-  { id: '2', name: 'Enterprise Webinar Series', type: 'Webinar', status: 'Completed', budget: 12000, leads: 3400, contacts: 1800, converted: 234, revenue: 520000, startDate: '2026-01-15', endDate: '2026-03-31' },
-  { id: '3', name: 'Partner Email Campaign', type: 'Email', status: 'In Progress', budget: 8500, leads: 0, contacts: 8500, converted: 425, revenue: 178000, startDate: '2026-04-10', endDate: '2026-05-15' },
-  { id: '4', name: 'Trade Show - Tech Summit', type: 'Conference', status: 'Planned', budget: 75000, leads: 0, contacts: 0, converted: 0, revenue: 0, startDate: '2026-08-20', endDate: '2026-08-22' },
-  { id: '5', name: 'LinkedIn Lead Gen', type: 'Other', status: 'Completed', budget: 15000, leads: 2100, contacts: 0, converted: 156, revenue: 312000, startDate: '2026-02-01', endDate: '2026-03-31' },
-];
-
 const statusColors: Record<string, string> = {
   'Planned': 'bg-slate-500/20 text-slate-400',
   'In Progress': 'bg-amber-500/20 text-amber-400',
@@ -32,16 +25,19 @@ const statusColors: Record<string, string> = {
 
 export default function CampaignPipeline() {
   const { config } = useConfig();
+  const { data } = useData();
   const [filter, setFilter] = useState('all');
 
-  const filteredCampaigns = filter === 'all' 
-    ? campaignData 
-    : campaignData.filter(c => c.status.toLowerCase() === filter);
+  const campaigns = Object.values(data.campaigns);
 
-  const totalBudget = campaignData.reduce((sum, c) => sum + c.budget, 0);
-  const totalLeads = campaignData.reduce((sum, c) => sum + c.leads, 0);
-  const totalContacts = campaignData.reduce((sum, c) => sum + c.contacts, 0);
-  const totalRevenue = campaignData.reduce((sum, c) => sum + c.revenue, 0);
+  const filteredCampaigns = filter === 'all' 
+    ? campaigns 
+    : campaigns.filter(c => (c.status || '').toLowerCase() === filter);
+
+  const totalBudget = campaigns.reduce((sum, c) => sum + (c.budgetedCost || 0), 0);
+  const totalLeads = campaigns.reduce((sum, c) => sum + (c.numberOfLeads || 0), 0);
+  const totalContacts = campaigns.reduce((sum, c) => sum + (c.numberOfContacts || 0), 0);
+  const totalRevenue = campaigns.reduce((sum, c) => sum + (c.expectedRevenue || 0), 0);
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">

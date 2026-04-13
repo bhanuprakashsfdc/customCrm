@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Users, 
@@ -15,17 +16,6 @@ import {
   Briefcase
 } from 'lucide-react';
 import RecordModal from './RecordModal';
-
-const contactData = [
-  { id: '1', firstName: 'John', lastName: 'Smith', accountName: 'Acme Corporation', title: 'CEO', email: 'john@acme.com', phone: '+1 555-0100', department: 'Executive', role: 'Decision Maker', isPrimary: true, createdDate: '2026-01-15' },
-  { id: '2', firstName: 'Sarah', lastName: 'Johnson', accountName: 'TechStart Inc', title: 'CTO', email: 'sarah@techstart.io', phone: '+1 555-0200', department: 'Engineering', role: 'Technical', isPrimary: false, createdDate: '2026-02-20' },
-  { id: '3', firstName: 'Mike', lastName: 'Wilson', accountName: 'Global Systems Ltd', title: 'VP Sales', email: 'mike@globalsystems.com', phone: '+44 20 7946 0958', department: 'Sales', role: 'Decision Maker', isPrimary: true, createdDate: '2026-01-10' },
-  { id: '4', firstName: 'Lisa', lastName: 'Chen', accountName: 'InnovateTech', title: 'Director', email: 'lisa@innovatetech.com', phone: '+1 555-0300', department: 'Operations', role: 'Influencer', isPrimary: false, createdDate: '2026-03-05' },
-  { id: '5', firstName: 'David', lastName: 'Lee', accountName: 'DataFlow Analytics', title: 'CFO', email: 'david@dataflow.io', phone: '+1 555-0400', department: 'Finance', role: 'Decision Maker', isPrimary: true, createdDate: '2026-02-28' },
-  { id: '6', firstName: 'Emma', lastName: 'Davis', accountName: 'CloudNine Systems', title: 'CEO', email: 'emma@cloudnine.cloud', phone: '+1 555-0500', department: 'Executive', role: 'Decision Maker', isPrimary: true, createdDate: '2026-03-15' },
-  { id: '7', firstName: 'Tom', lastName: 'Brown', accountName: 'Alpha Industries', title: 'VP Operations', email: 'tom@alphaind.com', phone: '+1 555-0600', department: 'Operations', role: 'Champion', isPrimary: false, createdDate: '2026-01-25' },
-  { id: '8', firstName: 'Anna', lastName: 'Martinez', accountName: 'Beta Ventures', title: 'Partner', email: 'anna@betaventures.vc', phone: '+1 555-0700', department: 'Investment', role: 'Economic', isPrimary: true, createdDate: '2026-04-01' },
-];
 
 const roleColors: Record<string, string> = {
   'Decision Maker': 'bg-purple-500/20 text-purple-400',
@@ -48,20 +38,33 @@ const departmentColors: Record<string, string> = {
 
 export default function ContactPipeline() {
   const { config } = useConfig();
+  const { contacts, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredContacts = filter === 'all' 
-    ? contactData 
-    : contactData.filter(c => c.department === filter || c.role === filter);
+    ? contacts 
+    : contacts.filter(c => c.department === filter || c.contactRole === filter);
 
-  const totalContacts = contactData.length;
-  const primaryContacts = contactData.filter(c => c.isPrimary).length;
-  const decisionMakers = contactData.filter(c => c.role === 'Decision Maker').length;
-  const uniqueAccounts = [...new Set(contactData.map(c => c.accountName))].length;
+  const totalContacts = contacts.length;
+  const primaryContacts = contacts.filter(c => c.isPrimary).length;
+  const decisionMakers = contacts.filter(c => c.contactRole === 'Decision Maker').length;
+  const uniqueAccounts = [...new Set(contacts.map(c => c.accountId).filter(Boolean))].length;
 
   const handleSave = (data: any) => {
-    console.log('New Contact:', data);
+    const record = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      accountId: data.accountId,
+      title: data.title,
+      email: data.email,
+      phone: data.phone,
+      department: data.department,
+      contactRole: data.role,
+      isPrimary: false,
+      ownerId: 'user_001',
+    };
+    saveRecord('contacts', record);
   };
 
   return (
@@ -164,7 +167,7 @@ export default function ContactPipeline() {
                       </div>
                     </div>
                   </td>
-                  <td className="p-4 text-white">{contact.accountName}</td>
+                  <td className="p-4 text-white">{getAccountName(contact.accountId)}</td>
                   <td className="p-4 text-slate-400">{contact.title}</td>
                   <td className="p-4">
                     <span className={cn("px-3 py-1 text-xs font-bold rounded-full", departmentColors[contact.department])}>
@@ -172,8 +175,8 @@ export default function ContactPipeline() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", roleColors[contact.role])}>
-                      {contact.role}
+                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", roleColors[contact.contactRole])}>
+                      {contact.contactRole}
                     </span>
                   </td>
                   <td className="p-4">
@@ -188,7 +191,7 @@ export default function ContactPipeline() {
                     )}
                   </td>
                   <td className="p-4 text-slate-400">{contact.email}</td>
-                  <td className="p-4 text-slate-400">{contact.createdDate}</td>
+                  <td className="p-4 text-slate-400">{contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : '-'}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">
                       <MoreHorizontal className="w-4 h-4" />
