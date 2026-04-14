@@ -1,5 +1,4 @@
 import { getPool } from './database';
-import mysql from 'mysql2/promise';
 
 interface Config {
   currency: 'INR' | 'USD' | 'EUR' | 'GBP';
@@ -15,43 +14,52 @@ const defaultConfig: Config = {
   region: 'US'
 };
 
-export async function getConfig(userId: string): Promise<Config> {
+export async function getConfig(): Promise<Config> {
   try {
     const pool = getPool();
-    const [rows] = await pool.execute('SELECT * FROM config WHERE userId = ?', [userId]) as any;
+    const [rows] = await pool.execute('SELECT * FROM config LIMIT 1') as any;
     if (rows.length > 0) {
       return rows[0] as Config;
     }
     // Create default config if not exists
-    await pool.execute('INSERT INTO config (userId, currency, defaultRole, region) VALUES (?, ?, ?, ?)', [userId, 'USD', 'user', 'US']);
+    await pool.execute('INSERT INTO config (currency, defaultRole, region) VALUES (?, ?, ?)', ['USD', 'user', 'US']);
     return defaultConfig;
   } catch {
     return defaultConfig;
   }
 }
 
-export async function updateConfig(userId: string, updates: Partial<Config>): Promise<Config> {
+export async function updateConfig(updates: Partial<Config>): Promise<Config> {
   try {
     const pool = getPool();
-    const config = await getConfig(userId);
-    const newConfig = { ...config, ...updates };
+    const config = await getConfig();
     
-    const [result] = await pool.execute(
-      'UPDATE config SET currency = ?, defaultRole = ?, showAllCurrencies = ?, region = ?, updatedAt = ? WHERE userId = ?',
-      [newConfig.currency, newConfig.defaultRole, newConfig.showAllCurrencies ? 1 : 0, newConfig.region, new Date(), userId]
-    ) as [mysql.OkPacket, any];
-    
-    const affectedRows = (result as mysql.OkPacket).affectedRows || 0;
-    if (affectedRows === 0) {
-      await pool.execute(
-        'INSERT INTO config (userId, currency, defaultRole, showAllCurrencies, region, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, newConfig.currency, newConfig.defaultRole, newConfig.showAllCurrencies ? 1 : 0, newConfig.region, new Date()]
-      );
+    // Handle empty updates - just return current config
+    if (!updates || Object.keys(updates).length === 0) {
+      return config;
     }
-    return newConfig as Config;
+    
+    // Handle nested localization from frontend
+    let cleanUpdates = updates;
+    if ('localization' in updates && updates.localization) {
+      const loc = updates.localization as any;
+      cleanUpdates = {
+        currency: loc.currency || config.currency,
+        defaultRole: loc.defaultRole || config.defaultRole,
+        showAllCurrencies: loc.showAllCurrencies ?? config.showAllCurrencies,
+        region: loc.region || config.region
+      };
+    }
+    
+    const newConfig = { ...config, ...cleanUpdates };
+    
+    await pool.execute(
+      'UPDATE config SET currency = ?, defaultRole = ?, showAllCurrencies = ?, region = ?, updatedAt = ?',
+      [newConfig.currency, newConfig.defaultRole, newConfig.showAllCurrencies ? 1 : 0, newConfig.region, new Date()]
+    );
+    return newConfig;
   } catch (error) {
     console.error('Config update error:', error);
     throw error;
   }
 }
-

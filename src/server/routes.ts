@@ -111,20 +111,20 @@ router.post(`/${type}`, authUser, async (req: Request, res: Response) => {
 }
 
 // Config routes
-router.get('/config', authUser, async (req: AuthRequest, res: Response) => {
+router.get('/config', authUser, async (req: Request, res: Response) => {
   try {
     const { getConfig } = await import('./config');
-    const config = await getConfig(req.user!.id);
+    const config = await getConfig();
     res.json(config);
   } catch (error) {
     res.status(500).json({ error: 'Config error' });
   }
 });
 
-router.put('/config', authUser, async (req: AuthRequest, res: Response) => {
+router.put('/config', authUser, async (req: Request, res: Response) => {
   try {
     const { updateConfig } = await import('./config');
-    const config = await updateConfig(req.user!.id, req.body);
+    const config = await updateConfig(req.body);
     res.json(config);
   } catch (error) {
     res.status(500).json({ error: 'Config update failed' });

@@ -27,12 +27,24 @@ app.post('/api/login', async (req: Request, res: Response) => {
     }
 
     const pool = getPool();
-    const result = await pool.execute('SELECT id, name, email, role, COALESCE(hashed_password, password) as hash FROM users WHERE email = ?', [email]) as [any[], any];
+    const result = await pool.execute('SELECT id, name, email, role, COALESCE(hashed_password, password) as hash, status FROM users WHERE email = ?', [email]) as [any[], any];
     const users = result[0];
     const user = users[0];
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if user is deleted
+    if (user.status === 'Deleted' || user.status === 'deleted') {
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@test.com';
+      return res.status(401).json({ error: `Your user has been deleted. Please reach out admin team at ${adminEmail}` });
+    }
+
+    // Check if user is deactivated
+    if (user.status === 'Inactive' || user.status === 'inactive') {
+      const adminEmail = process.env.ADMIN_EMAIL || 'admin@test.com';
+      return res.status(401).json({ error: `Your user has been deactivated. Please reach out admin team at ${adminEmail}` });
     }
 
     // Use hashed_password if exists, fallback to password for legacy
@@ -103,23 +115,20 @@ app.post('/api/migrate', async (req, res) => {
       "ALTER TABLE accounts ADD COLUMN annualRevenue DECIMAL(15,2)",
       "ALTER TABLE accounts ADD COLUMN numberOfEmployees INT",
       "ALTER TABLE accounts ADD COLUMN type VARCHAR(50)",
-      // leads
-      "ALTER TABLE leads ADD COLUMN company VARCHAR(255)",
-      "ALTER TABLE leads ADD COLUMN title VARCHAR(255)",
-      // opportunities
-      "ALTER TABLE opportunities ADD COLUMN amount DECIMAL(15,2)",
-      "ALTER TABLE opportunities ADD COLUMN closeDate DATE",
-      "ALTER TABLE opportunities ADD COLUMN accountId VARCHAR(255)",
-      "ALTER TABLE opportunities ADD COLUMN type VARCHAR(50)",
-      // orders
-      "ALTER TABLE orders ADD COLUMN accountId VARCHAR(255)",
-      "ALTER TABLE orders ADD COLUMN effectiveDate DATE",
-      "ALTER TABLE orders ADD COLUMN totalAmount DECIMAL(15,2)",
-      "ALTER TABLE orders ADD COLUMN type VARCHAR(50)",
-      "ALTER TABLE leads ADD COLUMN rating VARCHAR(50)",
-      "ALTER TABLE leads ADD COLUMN source VARCHAR(50)",
-      "ALTER TABLE leads ADD COLUMN title VARCHAR(255)",
-      "CREATE TABLE IF NOT EXISTS cases (id VARCHAR(255) PRIMARY KEY, subject VARCHAR(255), description TEXT, priority VARCHAR(50), type VARCHAR(50), origin VARCHAR(50), status VARCHAR(50), accountId VARCHAR(255), contactId VARCHAR(255), createdAt DATETIME, updatedAt DATETIME)"
+// leads
+      // ... (existing leads columns)
+      // config
+      `CREATE TABLE IF NOT EXISTS config (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        currency VARCHAR(10) DEFAULT 'USD',
+        defaultRole VARCHAR(20) DEFAULT 'user',
+        showAllCurrencies BOOLEAN DEFAULT true,
+        region VARCHAR(10) DEFAULT 'US',
+        updatedAt DATETIME
+      )`,
+      // Add missing columns to existing config
+      `ALTER TABLE config ADD COLUMN showAllCurrencies BOOLEAN DEFAULT true`,
+      `ALTER TABLE config ADD COLUMN region VARCHAR(10) DEFAULT 'US'`
     ];
     for (const sql of columns) {
       try {

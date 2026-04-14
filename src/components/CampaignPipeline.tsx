@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import BulkUpload from './BulkUpload';
+import RecordModal from './RecordModal';
 
 const statusColors: Record<string, string> = {
   'Planned': 'bg-slate-500/20 text-slate-400',
@@ -29,6 +30,7 @@ export default function CampaignPipeline() {
   const { config } = useConfig();
   const { data, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
+  const [modalOpen, setModalOpen] = useState(false);
 
   const campaigns = Object.values(data.campaigns);
 
@@ -41,23 +43,55 @@ export default function CampaignPipeline() {
   const totalContacts = campaigns.reduce((sum, c) => sum + (c.numberOfContacts || 0), 0);
   const totalRevenue = campaigns.reduce((sum, c) => sum + (c.expectedRevenue || 0), 0);
 
+  const handleSave = (data: any) => {
+    const record = {
+      name: data.name,
+      type: data.type,
+      status: data.status,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      budgetedCost: parseFloat(data.budget) || 0,
+      numberOfLeads: 0,
+      numberOfContacts: 0,
+      converted: 0,
+      expectedRevenue: 0,
+      ownerId: 'user_001',
+    };
+    saveRecord('campaigns', record);
+  };
+
   return (
-    <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
+    <div className='p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar'>
+      <RecordModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        objectType='campaign'
+        onSave={handleSave}
+      />
+      <div className='flex flex-col sm:flex-row justify-between items-end gap-4'>
         <div>
-          <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Campaigns</h2>
-          <p className="text-on-surface-variant mt-1 text-sm">Marketing campaigns and campaign analytics.</p>
+          <h2 className='text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white'>Campaigns</h2>
+          <p className='text-on-surface-variant mt-1 text-sm'>Marketing campaigns and campaign analytics.</p>
         </div>
-        <BulkUpload
-          objectType="Campaign"
-          onUpload={async (data) => {
-            for (const item of data) {
-              await saveRecord('campaigns', { ...item, ownerId: 'user_001' });
-            }
-          }}
-          onExport={() => Object.values(data.campaigns)}
-          fields={['name', 'type', 'status', 'startDate', 'endDate', 'budget']}
-        />
+        <div className='flex flex-col sm:flex-row items-end gap-4'>
+<button 
+            onClick={() => setModalOpen(true)}
+            className='flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-container font-bold rounded-full text-sm shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-transform'
+          >
+            <Plus className='w-4 h-4' />
+            Add Campaign
+          </button>
+          <BulkUpload
+            objectType='Campaign'
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('campaigns', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.campaigns)}
+            fields={['name', 'type', 'status', 'startDate', 'endDate', 'budget']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

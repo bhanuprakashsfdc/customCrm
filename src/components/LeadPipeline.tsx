@@ -10,8 +10,10 @@ import {
   Users,
   Calendar,
   MoreHorizontal,
-  CheckCircle2
+  CheckCircle2,
+  Plus
 } from 'lucide-react';
+import RecordModal from './RecordModal';
 import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
@@ -42,6 +44,7 @@ export default function LeadPipeline() {
   const { config } = useConfig();
   const { leads, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
+  const [modalOpen, setModalOpen] = useState(false);
 
   const filteredLeads = filter === 'all' 
     ? leads 
@@ -52,7 +55,7 @@ export default function LeadPipeline() {
   const hotLeads = leads.filter(l => l.rating === 'Hot').length;
   const newLeads = leads.filter(l => l.status === 'New').length;
 
-  const handleSave = (data: any) => {
+  const handleSave = async (data: any) => {
     const record = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -65,132 +68,149 @@ export default function LeadPipeline() {
       source: data.source,
       ownerId: 'user_001',
     };
-    saveRecord('leads', record);
+    await saveRecord('leads', record);
+    setModalOpen(false);
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
+    <div className='p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar'>
+      <RecordModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        objectType='lead'
+        onSave={handleSave}
+      />
+      <div className='flex flex-col sm:flex-row justify-between items-end gap-4'>
         <div>
-          <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Leads</h2>
-          <p className="text-on-surface-variant mt-1 text-sm">Lead management and conversion tracking.</p>
+          <h2 className='text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white'>Leads</h2>
+          <p className='text-on-surface-variant mt-1 text-sm'>Lead management and conversion tracking.</p>
         </div>
-        <BulkUpload
-          objectType="Lead"
-          onUpload={async (data) => {
-            for (const item of data) {
-              await saveRecord('leads', { ...item, ownerId: 'user_001' });
-            }
-          }}
-          onExport={() => leads}
-          fields={['firstName', 'lastName', 'company', 'title', 'email', 'phone', 'status', 'rating', 'source']}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
-          <div className="flex items-center gap-2 text-slate-500 mb-2">
-            <DollarSign className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Pipeline Value</span>
-          </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue, config.localization.currency)}</p>
-        </div>
-        <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
-          <div className="flex items-center gap-2 text-slate-500 mb-2">
-            <UserPlus className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Total Leads</span>
-          </div>
-          <p className="text-2xl font-bold text-white">{leads.length}</p>
-        </div>
-        <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
-          <div className="flex items-center gap-2 text-slate-500 mb-2">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Qualified</span>
-          </div>
-          <p className="text-2xl font-bold text-emerald-400">{qualifiedLeads}</p>
-        </div>
-        <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
-          <div className="flex items-center gap-2 text-slate-500 mb-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="text-xs font-bold uppercase tracking-widest">Hot Leads</span>
-          </div>
-          <p className="text-2xl font-bold text-red-400">{hotLeads}</p>
-        </div>
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {['all', 'New', 'Open', 'Contacted', 'Qualified', 'Unqualified'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status)}
-            className={cn(
-              "px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-colors",
-              filter === status
-                ? "bg-primary text-on-primary" 
-                : "bg-surface-container-low text-slate-400 hover:text-white"
-            )}
+        <div className='flex flex-col sm:flex-row items-end gap-2'>
+          <button 
+            onClick={() => setModalOpen(true)}
+            className='flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-container font-bold rounded-full text-sm shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-transform'
           >
-            {status === 'all' ? 'All Leads' : status}
+            <Plus className='w-4 h-4' />
+            Add Lead
           </button>
-        ))}
+<BulkUpload
+            objectType='Lead'
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('leads', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => leads}
+            fields={['firstName', 'lastName', 'company', 'title', 'email', 'phone', 'status', 'rating', 'source']}
+          />
+        </div>
       </div>
 
-      <div className="bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>
+        <div className='bg-surface-container-low p-4 rounded-2xl border border-white/5'>
+          <div className='flex items-center gap-2 text-slate-500 mb-2'>
+            <DollarSign className='w-4 h-4' />
+            <span className='text-xs font-bold uppercase tracking-widest'>Pipeline Value</span>
+          </div>
+          <p className='text-2xl font-bold text-white'>{formatCurrency(totalRevenue, config.localization.currency, config.localization.showAllCurrencies)}</p>
+        </div>
+        <div className='bg-surface-container-low p-4 rounded-2xl border border-white/5'>
+          <div className='flex items-center gap-2 text-slate-500 mb-2'>
+            <UserPlus className='w-4 h-4' />
+            <span className='text-xs font-bold uppercase tracking-widest'>Total Leads</span>
+          </div>
+          <p className='text-2xl font-bold text-white'>{leads.length}</p>
+        </div>
+        <div className='bg-surface-container-low p-4 rounded-2xl border border-white/5'>
+          <div className='flex items-center gap-2 text-slate-500 mb-2'>
+            <CheckCircle2 className='w-4 h-4' />
+            <span className='text-xs font-bold uppercase tracking-widest'>Qualified</span>
+          </div>
+          <p className='text-2xl font-bold text-white'>{qualifiedLeads}</p>
+        </div>
+        <div className='bg-surface-container-low p-4 rounded-2xl border border-white/5'>
+          <div className='flex items-center gap-2 text-slate-500 mb-2'>
+            <TrendingUp className='w-4 h-4' />
+            <span className='text-xs font-bold uppercase tracking-widest'>Hot Leads</span>
+          </div>
+          <p className='text-2xl font-bold text-white'>{hotLeads}</p>
+        </div>
+      </div>
+
+      <div className='flex flex-col sm:flex-row gap-4 items-center justify-between'>
+        <div className='flex gap-2'>
+          {['all', 'New', 'Open', 'Contacted', 'Qualified', 'Unqualified'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
+                filter === f 
+                  ? 'bg-primary text-on-primary' 
+                  : 'bg-surface-container-low text-slate-400 hover:bg-white/10'
+              )}
+            >
+              {f === 'all' ? 'All' : f}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className='bg-surface-container-low rounded-2xl border border-white/5 overflow-hidden'>
+        <div className='overflow-x-auto'>
+          <table className='w-full'>
             <thead>
-              <tr className="border-b border-white/5">
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Lead Name</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Company</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Title</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Rating</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Source</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Revenue</th>
-                <th className="text-left p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Created</th>
-                <th className="p-4"></th>
+              <tr className='border-b border-white/5'>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Name</th>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Company</th>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Status</th>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Rating</th>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Source</th>
+                <th className='text-left px-6 py-4 text-sm font-semibold text-slate-400'>Revenue</th>
+                <th className='text-right px-6 py-4 text-sm font-semibold text-slate-400'>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center">
-                        <UserPlus className="w-4 h-4 text-indigo-400" />
-                      </div>
-                      <div>
-                        <span className="font-semibold text-white block">{lead.firstName} {lead.lastName}</span>
-                        <span className="text-xs text-slate-500">{lead.email}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4 text-white">{lead.company}</td>
-                  <td className="p-4 text-slate-400">{lead.title}</td>
-                  <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", statusColors[lead.status])}>
-                      {lead.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", ratingColors[lead.rating])}>
-                      {lead.rating}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", sourceColors[lead.source])}>
-                      {lead.source}
-                    </span>
-                  </td>
-                  <td className="p-4 text-white">{formatCurrency(lead.annualRevenue, config.localization.currency)}</td>
-                  <td className="p-4 text-slate-400">{new Date(lead.createdAt).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <button className="p-2 text-slate-400 hover:text-white transition-colors">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
+              {filteredLeads.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className='px-6 py-12 text-center text-slate-400'>
+                    No leads found. Click 'Add Lead' to create one.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredLeads.map((lead: any) => (
+                  <tr key={lead.id} className='border-b border-white/5 hover:bg-white/5 transition-colors'>
+                    <td className='px-6 py-4'>
+                      <div>
+                        <p className='font-medium text-white'>{lead.firstName} {lead.lastName}</p>
+                        <p className='text-sm text-slate-400'>{lead.title}</p>
+                      </div>
+                    </td>
+                    <td className='px-6 py-4 text-slate-300'>{lead.company || '-'}</td>
+                    <td className='px-6 py-4'>
+                      <span className={cn('px-3 py-1 rounded-full text-xs font-medium', statusColors[lead.status] || statusColors['New'])}>
+                        {lead.status || 'New'}
+                      </span>
+                    </td>
+                    <td className='px-6 py-4'>
+                      <span className={cn('px-3 py-1 rounded-full text-xs font-medium', ratingColors[lead.rating] || ratingColors['Cold'])}>
+                        {lead.rating || 'Cold'}
+                      </span>
+                    </td>
+                    <td className='px-6 py-4'>
+                      <span className={cn('px-3 py-1 rounded-full text-xs font-medium', sourceColors[lead.source] || sourceColors['Other'])}>
+                        {lead.source || 'Other'}
+                      </span>
+                    </td>
+                    <td className='p-4 text-white'>{formatCurrency(lead.annualRevenue, config.localization.currency, config.localization.showAllCurrencies)}</td>
+                    <td className='px-6 py-4 text-right'>
+                      <button className='p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition-colors'>
+                        <MoreHorizontal className='w-4 h-4' />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

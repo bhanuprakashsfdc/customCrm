@@ -18,10 +18,13 @@ import {
   Briefcase,
   FileText,
   ChevronDown,
-  UserCircle
+  UserCircle,
+  Megaphone,
+  Package,
+  Boxes
 } from 'lucide-react';
 
-export type ObjectType = 'account' | 'lead' | 'contact' | 'opportunity' | 'order' | 'case' | 'user';
+export type ObjectType = 'account' | 'lead' | 'contact' | 'opportunity' | 'order' | 'case' | 'user' | 'campaign' | 'contract' | 'quote' | 'product' | 'task';
 
 export interface RecordFormData {
   account: {
@@ -80,6 +83,49 @@ export interface RecordFormData {
     email: string;
     role: string;
     password: string;
+  };
+  campaign: {
+    name: string;
+    type: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    budget: string;
+  };
+  contract: {
+    contractNumber: string;
+    accountId: string;
+    type: string;
+    status: string;
+    value: string;
+    startDate: string;
+    endDate: string;
+  };
+  quote: {
+    name: string;
+    accountId: string;
+    opportunityId: string;
+    total: string;
+    status: string;
+    validUntil: string;
+  };
+  product: {
+    name: string;
+    productCode: string;
+    description: string;
+    family: string;
+    unitPrice: string;
+    isActive: boolean;
+  };
+  task: {
+    name: string;
+    productId: string;
+    accountId: string;
+    status: string;
+    serialNumber: string;
+    quantity: string;
+    price: string;
+    purchaseDate: string;
   };
 }
 
@@ -181,6 +227,74 @@ const objectConfig = {
       { name: 'email', label: 'Email', type: 'email', required: true },
       { name: 'password', label: 'Password', type: 'password', required: true },
       { name: 'role', label: 'Role', type: 'select', options: ['Admin', 'Manager', 'User', 'Viewer'], required: true },
+    ],
+  },
+  campaign: {
+    title: 'New Campaign',
+    icon: Megaphone,
+    color: 'indigo',
+    fields: [
+      { name: 'name', label: 'Campaign Name', type: 'text', required: true },
+      { name: 'type', label: 'Type', type: 'select', options: ['Conference', 'Email', 'Event', 'Other'], required: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Planned', 'In Progress', 'Completed', 'Aborted'], required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'endDate', label: 'End Date', type: 'date', required: true },
+      { name: 'budget', label: 'Budget', type: 'number' },
+    ],
+  },
+  contract: {
+    title: 'New Contract',
+    icon: FileText,
+    color: 'emerald',
+    fields: [
+      { name: 'contractNumber', label: 'Contract Number', type: 'text', required: true },
+      { name: 'accountId', label: 'Account', type: 'text', required: true },
+      { name: 'type', label: 'Contract Type', type: 'select', options: ['Sales', 'Service', 'NDA', 'Partner', 'Other'], required: true },
+      { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'In Approval', 'Activated', 'Expired'], required: true },
+      { name: 'value', label: 'Total Value', type: 'number', required: true },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'endDate', label: 'End Date', type: 'date', required: true },
+    ],
+  },
+  quote: {
+    title: 'New Quote',
+    icon: FileText,
+    color: 'purple',
+    fields: [
+      { name: 'name', label: 'Quote Name', type: 'text', required: true },
+      { name: 'accountId', label: 'Account', type: 'text' },
+      { name: 'opportunityId', label: 'Opportunity', type: 'text' },
+      { name: 'total', label: 'Total', type: 'number' },
+      { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'Sent', 'Accepted', 'Rejected', 'Closed'], required: true },
+      { name: 'validUntil', label: 'Valid Until', type: 'date' },
+    ],
+  },
+  product: {
+    title: 'New Product',
+    icon: Package,
+    color: 'indigo',
+    fields: [
+      { name: 'name', label: 'Product Name', type: 'text', required: true },
+      { name: 'productCode', label: 'Product Code', type: 'text', required: true },
+      { name: 'description', label: 'Description', type: 'text' },
+      { name: 'family', label: 'Family', type: 'select', options: ['Software', 'Add-On', 'Service'], required: true },
+      { name: 'unitPrice', label: 'Unit Price', type: 'number', required: true },
+      { name: 'isActive', label: 'Active', type: 'checkbox' },
+    ],
+  },
+  task: {
+    title: 'New Asset',
+    icon: Boxes,
+    color: 'amber',
+    fields: [
+      { name: 'name', label: 'Asset Name', type: 'text', required: true },
+      { name: 'productId', label: 'Product', type: 'text' },
+      { name: 'accountId', label: 'Account', type: 'text' },
+      { name: 'status', label: 'Status', type: 'select', options: ['Sold', 'Installed', 'Registered', 'Obsolete', 'Damaged'], required: true },
+      { name: 'serialNumber', label: 'Serial Number', type: 'text' },
+      { name: 'quantity', label: 'Quantity', type: 'number' },
+      { name: 'price', label: 'Price', type: 'number' },
+      { name: 'purchaseDate', label: 'Purchase Date', type: 'date' },
     ],
   },
 };
