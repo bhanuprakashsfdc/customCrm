@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -74,14 +75,14 @@ export default function QuotePipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Value</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalValue / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue, config.localization.currency)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
             <CheckCircle2 className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Won Value</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-400">${(acceptedValue / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(acceptedValue, config.localization.currency)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -150,8 +151,8 @@ export default function QuotePipeline() {
                       {quote.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${(quote.totalPrice || 0).toLocaleString()}</td>
-                  <td className="p-4 text-white font-bold">${(quote.grandTotal || 0).toLocaleString()}</td>
+                  <td className="p-4 text-white">{formatCurrency(quote.totalPrice || 0, config.localization.currency)}</td>
+                  <td className="p-4 text-white font-bold">{formatCurrency(quote.grandTotal || 0, config.localization.currency)}</td>
                   <td className="p-4 text-slate-400">{quote.expirationDate || '-'}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">

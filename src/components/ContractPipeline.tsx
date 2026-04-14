@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -71,7 +72,7 @@ export default function ContractPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Value</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalValue / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue, config.localization.currency)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -148,7 +149,7 @@ export default function ContractPipeline() {
                       {contract.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${(contract.totalContractValue || 0).toLocaleString()}</td>
+                  <td className="p-4 text-white">{formatCurrency(contract.totalContractValue || 0, config.localization.currency)}</td>
                   <td className="p-4 text-slate-400">{contract.startDate || '-'}</td>
                   <td className="p-4 text-slate-400">{contract.endDate || '-'}</td>
                   <td className="p-4 text-amber-400">{contract.endDate ? new Date(new Date(contract.endDate).setMonth(new Date(contract.endDate).getMonth() - 1)).toISOString().split('T')[0] : '-'}</td>

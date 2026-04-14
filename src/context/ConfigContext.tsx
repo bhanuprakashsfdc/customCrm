@@ -47,6 +47,8 @@ export interface Localization {
   locale: string;
   dateFormat: string;
   currency: string;
+  showAllCurrencies: boolean;
+  region: 'US' | 'UK' | 'IND';
 }
 
 export interface Organization {
@@ -101,11 +103,36 @@ function loadConfig(): AppConfig {
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<AppConfig>(loadConfig);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    const fetchServerConfig = async () => {
+      const token = localStorage.getItem('crm_jwt') || '';
+      try {
+        const res = await fetch('/api/config', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const serverConfig = await res.json();
+          setConfig(prev => ({
+            ...prev,
+            localization: {
+              ...prev.localization,
+              currency: serverConfig.currency || prev.localization.currency
+            }
+          }));
+        }
+      } catch {}
+      setLoaded(true);
+    };
+    fetchServerConfig();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
     localStorage.setItem('crm_config', JSON.stringify(config));
     applyThemeStyles(config.theme);
-  }, [config]);
+  }, [config, loaded]);
 
   const applyThemeStyles = useCallback((theme: Theme) => {
     const root = document.documentElement;
@@ -120,13 +147,19 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 
   const updateConfig = useCallback(async (updates: Partial<AppConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
+    const token = localStorage.getItem('crm_jwt') || '';
     try {
       await fetch('/api/config', {
         method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updates.localization || updates)
       });
-    } catch {}
+    } catch (err) {
+      console.error('Config update failed:', err);
+    }
   }, []);
 
   const updateThemeColor = useCallback((key: keyof ThemeColors, value: string) => {

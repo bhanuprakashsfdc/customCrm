@@ -28,14 +28,15 @@ app.post('/api/login', async (req: Request, res: Response) => {
 
     const pool = getPool();
     const result = await pool.execute('SELECT id, name, email, role, COALESCE(hashed_password, password) as hash FROM users WHERE email = ?', [email]) as [any[], any];
-    const user = result[0] as { id: string; name: string; email: string; role: string; hashed_password?: string; password?: string };
+    const users = result[0];
+    const user = users[0];
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Use hashed_password if exists, fallback to password for legacy
-    const hash = user[0].hash;
+    const hash = user.hash;
     if (!hash) return res.status(401).json({ error: 'No password hash' });
     const isValid = await bcrypt.compare(password, hash);
 
@@ -66,15 +67,59 @@ app.post('/api/login', async (req: Request, res: Response) => {
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
+app.post('/api/seed-admin', async (req, res) => {
+  try {
+    const pool = getPool();
+    const hashed_password = await bcrypt.hash('admin123', 10);
+    await pool.execute(
+      'INSERT IGNORE INTO users (id, name, email, hashed_password, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ['admin_001', 'Admin User', 'admin@test.com', hashed_password, 'admin', new Date(), new Date()]
+    );
+    res.json({ status: 'seeded', email: 'admin@test.com', password: 'admin123' });
+  } catch (error) {
+    console.error('Seed error:', error);
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 app.post('/api/migrate', async (req, res) => {
   try {
     const pool = getPool();
     const columns = [
+      // users
+      "ALTER TABLE users ADD COLUMN password VARCHAR(255)",
+      "ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'Active'",
+      // contacts
       "ALTER TABLE contacts ADD COLUMN department VARCHAR(255)",
       "ALTER TABLE contacts ADD COLUMN contactRole VARCHAR(255)",
       "ALTER TABLE contacts ADD COLUMN isPrimary BOOLEAN",
       "ALTER TABLE contacts ADD COLUMN ownerId VARCHAR(255)",
-      "ALTER TABLE users ADD COLUMN password VARCHAR(255)"
+      "ALTER TABLE contacts ADD COLUMN accountId VARCHAR(255)",
+      // accounts
+      "ALTER TABLE accounts ADD COLUMN industry VARCHAR(255)",
+      "ALTER TABLE accounts ADD COLUMN website VARCHAR(255)",
+      "ALTER TABLE accounts ADD COLUMN phone VARCHAR(50)",
+      "ALTER TABLE accounts ADD COLUMN rating VARCHAR(50)",
+      "ALTER TABLE accounts ADD COLUMN annualRevenue DECIMAL(15,2)",
+      "ALTER TABLE accounts ADD COLUMN numberOfEmployees INT",
+      "ALTER TABLE accounts ADD COLUMN type VARCHAR(50)",
+      // leads
+      "ALTER TABLE leads ADD COLUMN company VARCHAR(255)",
+      "ALTER TABLE leads ADD COLUMN title VARCHAR(255)",
+      // opportunities
+      "ALTER TABLE opportunities ADD COLUMN amount DECIMAL(15,2)",
+      "ALTER TABLE opportunities ADD COLUMN closeDate DATE",
+      "ALTER TABLE opportunities ADD COLUMN accountId VARCHAR(255)",
+      "ALTER TABLE opportunities ADD COLUMN type VARCHAR(50)",
+      // orders
+      "ALTER TABLE orders ADD COLUMN accountId VARCHAR(255)",
+      "ALTER TABLE orders ADD COLUMN effectiveDate DATE",
+      "ALTER TABLE orders ADD COLUMN totalAmount DECIMAL(15,2)",
+      "ALTER TABLE orders ADD COLUMN type VARCHAR(50)",
+      "ALTER TABLE leads ADD COLUMN rating VARCHAR(50)",
+      "ALTER TABLE leads ADD COLUMN source VARCHAR(50)",
+      "ALTER TABLE leads ADD COLUMN title VARCHAR(255)",
+      "CREATE TABLE IF NOT EXISTS cases (id VARCHAR(255) PRIMARY KEY, subject VARCHAR(255), description TEXT, priority VARCHAR(50), type VARCHAR(50), origin VARCHAR(50), status VARCHAR(50), accountId VARCHAR(255), contactId VARCHAR(255), createdAt DATETIME, updatedAt DATETIME)"
     ];
     for (const sql of columns) {
       try {

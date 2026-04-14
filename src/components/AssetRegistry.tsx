@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -65,7 +66,7 @@ export default function AssetRegistry() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Value</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalValue / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue, config.localization.currency)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -144,7 +145,7 @@ export default function AssetRegistry() {
                   </td>
                   <td className="p-4 text-slate-400 font-mono text-sm">{asset.serialNumber}</td>
                   <td className="p-4 text-white">{asset.quantity}</td>
-                  <td className="p-4 text-white font-bold">${(asset.price * asset.quantity).toLocaleString()}</td>
+                  <td className="p-4 text-white font-bold">{formatCurrency(asset.price * asset.quantity, config.localization.currency)}</td>
                   <td className="p-4 text-slate-400">{asset.purchaseDate}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">

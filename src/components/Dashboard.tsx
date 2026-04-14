@@ -4,6 +4,7 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'rec
 import { motion } from 'motion/react';
 import { cn } from '@/src/lib/utils';
 import { useData } from '../context/DataContext';
+import { useConfig } from '../context/ConfigContext';
 import { formatCurrency } from '../lib/currency';
 
 interface Opportunity {
@@ -24,6 +25,7 @@ const generateGrowthData = (opportunities: Opportunity[]) => {
 
 export default function Dashboard() {
   const { opportunities, leads, refreshData } = useData();
+  const { config } = useConfig();
   const [pipelineValue, setPipelineValue] = useState(0);
   const [newLeads, setNewLeads] = useState(0);
   const [conversionRate, setConversionRate] = useState(0);
@@ -160,7 +162,7 @@ export default function Dashboard() {
               {topDeals.map((opp, i) => (
                 <tr key={i} className="hover:bg-white/5">
                   <td className="py-3 font-medium">{opp.accountName || 'N/A'}</td>
-                  <td className="py-3">${(opp.amount || 0).toLocaleString()}</td>
+                  <td className="py-3">{formatCurrency(opp.amount || 0, config.localization.currency)}</td>
                   <td className="py-3">
                     <span className="px-2 py-1 rounded text-xs bg-primary/10 text-primary">
                       {opp.stageName || 'N/A'}

@@ -258,15 +258,27 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
           {activeTab === 'system' && (
             <div className="space-y-4">
               <div className="space-y-2">
+                <label className="text-xs text-slate-400 font-medium">Region</label>
+                <select
+                  value={config.localization.region}
+                  onChange={(e) => updateConfig({ localization: { ...config.localization, region: e.target.value as 'US' | 'UK' | 'IND' } })}
+                  className="w-full bg-surface-container-lowest border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-primary/50 focus:outline-none"
+                >
+                  <option value="US">US</option>
+                  <option value="UK">UK</option>
+                  <option value="IND">India</option>
+                </select>
+              </div>
+              <div className="space-y-2">
                 <label className="text-xs text-slate-400 font-medium">Currency</label>
                 <select
                   value={config.localization.currency}
-                  onChange={(e) => updateConfig({ localization: { ...config.localization, currency: e.target.value as 'INR' | 'USD' | 'EUR' } })}
+                  onChange={(e) => updateConfig({ localization: { ...config.localization, currency: e.target.value as 'USD' | 'GBP' | 'INR' } })}
                   className="w-full bg-surface-container-lowest border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-primary/50 focus:outline-none"
                 >
-                  <option value="INR">₹ INR (India)</option>
-                  <option value="USD">$ USD</option>
-                  <option value="EUR">€ EUR</option>
+                  <option value="USD">$ USD (US)</option>
+                  <option value="GBP">£ GBP (UK)</option>
+                  <option value="INR">₹ INR (IND)</option>
                 </select>
               </div>
             </div>

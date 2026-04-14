@@ -145,8 +145,11 @@ export async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS config (
       id INT PRIMARY KEY AUTO_INCREMENT,
-      currency VARCHAR(10) DEFAULT 'INR',
+      userId VARCHAR(255) UNIQUE,
+      currency VARCHAR(10) DEFAULT 'USD',
       defaultRole VARCHAR(20) DEFAULT 'user',
+      showAllCurrencies BOOLEAN DEFAULT true,
+      region VARCHAR(10) DEFAULT 'US',
       updatedAt DATETIME
     )`,
     `CREATE TABLE IF NOT EXISTS users (

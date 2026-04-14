@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -92,7 +93,7 @@ export default function AccountPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Annual Revenue</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalRevenue / 1000000).toFixed(1)}M</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue, config.localization.currency)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -174,7 +175,7 @@ export default function AccountPipeline() {
                       {account.rating || 'Inactive'}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${((account.annualRevenue || 0) / 1000000).toFixed(1)}M</td>
+                  <td className="p-4 text-white">{formatCurrency(account.annualRevenue || 0, config.localization.currency)}</td>
                   <td className="p-4 text-white">{(account.numberOfEmployees || 0).toLocaleString()}</td>
                   <td className="p-4 text-slate-400">
                     {account.billingCity}, {account.billingState} {account.billingCountry}

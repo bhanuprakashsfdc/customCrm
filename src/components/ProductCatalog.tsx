@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -77,7 +78,7 @@ export default function ProductCatalog() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Avg Price</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalValue / activeProducts).toFixed(0)}</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue / activeProducts, config.localization.currency)}</p>
         </div>
       </div>
 
@@ -127,7 +128,7 @@ export default function ProductCatalog() {
                 </span>
               )}
             </div>
-            <p className="text-lg font-bold text-white">${product.unitPrice.toLocaleString()}</p>
+            <p className="text-lg font-bold text-white">{formatCurrency(product.unitPrice, config.localization.currency)}</p>
             <p className="text-xs text-slate-500 mt-2 line-clamp-2">{product.description}</p>
           </div>
         ))}
