@@ -66,11 +66,15 @@ export async function initializeDatabase() {
       status VARCHAR(255),
       priority VARCHAR(255),
       dueDate DATE,
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       relatedToType VARCHAR(255),
       relatedToId VARCHAR(255),
       assignedTo VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS events (
       id VARCHAR(255) PRIMARY KEY,
@@ -79,10 +83,14 @@ export async function initializeDatabase() {
       startDate DATETIME,
       endDate DATETIME,
       location VARCHAR(255),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       relatedToType VARCHAR(255),
       relatedToId VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS campaigns (
       id VARCHAR(255) PRIMARY KEY,
@@ -92,8 +100,27 @@ export async function initializeDatabase() {
       startDate DATE,
       endDate DATE,
       budget DECIMAL(15,2),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS cases (
+      id VARCHAR(255) PRIMARY KEY,
+      caseNumber VARCHAR(255),
+      subject VARCHAR(255),
+      description TEXT,
+      status VARCHAR(255),
+      priority VARCHAR(255),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
+      assignedTo VARCHAR(255),
+      createdAt DATETIME,
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS quotes (
       id VARCHAR(255) PRIMARY KEY,
@@ -143,18 +170,34 @@ export async function initializeDatabase() {
       createdAt DATETIME,
       updatedAt DATETIME
     )`,
+    `CREATE TABLE IF NOT EXISTS config (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      userId VARCHAR(255) UNIQUE,
+      currency VARCHAR(10) DEFAULT 'USD',
+      defaultRole VARCHAR(20) DEFAULT 'user',
+      showAllCurrencies BOOLEAN DEFAULT true,
+      region VARCHAR(10) DEFAULT 'US',
+      updatedAt DATETIME
+    )`,
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255),
-      email VARCHAR(255),
-      password VARCHAR(255),
-      role VARCHAR(255),
+      email VARCHAR(255) UNIQUE,
+      hashed_password VARCHAR(255),
+      role VARCHAR(255) DEFAULT 'user',
       createdAt DATETIME,
       updatedAt DATETIME
-    )`,
+    )`
   ];
 
-  for (const sql of tables) {
+  const indexes = [
+    `CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_opportunities_stage ON opportunities(stage)`,
+    `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
+    `CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`
+  ];
+
+  for (const sql of [...tables, ...indexes]) {
     await pool.execute(sql);
   }
   

@@ -23,27 +23,25 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/users');
-      const users = await response.json();
-      
-      const user = users.find((u: any) => u.email === email);
-      
-      if (!user) {
-        setError('User not found. Please check your email or register.');
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Login failed');
         setLoading(false);
         return;
       }
 
-      if (user.password !== password) {
-        setError('Invalid password');
-        setLoading(false);
-        return;
-      }
-
-      onLogin({ id: user.id, name: user.name, email: user.email, role: user.role });
+      const { token, user } = await response.json();
+      localStorage.setItem('crm_jwt', token);
+      onLogin(user);
       navigate('/');
     } catch (err) {
-      setError('Failed to connect. Please try again.');
+      setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -59,16 +57,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
     setError('');
     try {
-      const checkRes = await fetch('/api/users');
-      const users = await checkRes.json();
-      const existing = users.find((u: any) => u.email === email);
-      
-      if (existing) {
-        setError('Email already registered. Please login.');
-        setLoading(false);
-        return;
-      }
-
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,6 +70,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
       if (response.ok) {
         const user = await response.json();
+        localStorage.setItem('crm_jwt', user.id); // simple token for demo
         onLogin({ id: user.id, name: user.name, email: user.email, role: user.role });
         navigate('/');
       } else {

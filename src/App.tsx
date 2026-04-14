@@ -9,6 +9,7 @@ import ContactDetail from './components/ContactDetail';
 import DealPipeline from './components/DealPipeline';
 import OrderPipeline from './components/OrderPipeline';
 import CasePipeline from './components/CasePipeline';
+import UserPipeline from './components/UserPipeline';
 import LoginPage from './components/LoginPage';
 
 const AUTH_KEY = 'crm_auth';
@@ -66,6 +67,8 @@ function AppContent() {
         return <OrderPipeline />;
       case 'cases':
         return <CasePipeline />;
+      case 'users':
+        return <UserPipeline />;
       default:
         return (
           <div className="flex items-center justify-center h-[calc(100vh-64px)]">

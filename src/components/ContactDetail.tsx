@@ -52,7 +52,7 @@ export default function ContactPipeline() {
   const decisionMakers = contacts.filter(c => c.contactRole === 'Decision Maker').length;
   const uniqueAccounts = [...new Set(contacts.map(c => c.accountId).filter(Boolean))].length;
 
-  const handleSave = (data: any) => {
+const handleSave = async (data: any) => {
     const record = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -65,23 +65,31 @@ export default function ContactPipeline() {
       isPrimary: false,
       ownerId: 'user_001',
     };
-    saveRecord('contacts', record);
+    await saveRecord('contacts', record);
+    setModalOpen(false);
   };
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
+    <div className='p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar'>
       <RecordModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
-        objectType="contact"
+        objectType='contact'
         onSave={handleSave}
       />
-      <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
+      <div className='flex flex-col sm:flex-row justify-between items-end gap-4'>
         <div>
-          <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Contacts</h2>
-          <p className="text-on-surface-variant mt-1 text-sm">Contact relationship management.</p>
+          <h2 className='text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white'>Contacts</h2>
+          <p className='text-on-surface-variant mt-1 text-sm'>Contact relationship management.</p>
         </div>
-        <div className="flex flex-col sm:flex-row items-end gap-0">
+        <div className='flex flex-col sm:flex-row items-end gap-2'>
+          <button 
+            onClick={() => setModalOpen(true)}
+            className='flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary-container text-on-primary-container font-bold rounded-full text-sm shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-transform'
+          >
+            <Plus className='w-4 h-4' />
+            Add Contact
+          </button>
           <BulkUpload
             objectType="Contact"
             onUpload={async (data) => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
+import { formatCurrency } from '@/src/lib/currency';
 import { 
   Handshake, 
   TrendingUp, 
@@ -94,6 +95,7 @@ export default function DealPipeline() {
               }
             }}
             onExport={() => opportunities}
+            onNew={() => setModalOpen(true)}
             fields={['name', 'value', 'stageName', 'probability', 'closeDate', 'accountId', 'contactId']}
           />
         </div>
@@ -105,7 +107,7 @@ export default function DealPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Pipeline Value</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalAmount / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalAmount / 1000, config.localization.currency, config.localization.showAllCurrencies)}K</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -119,7 +121,7 @@ export default function DealPipeline() {
             <CheckCircle2 className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Won Value</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-400">${(wonAmount / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(wonAmount / 1000, config.localization.currency, config.localization.showAllCurrencies)}K</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -185,7 +187,7 @@ export default function DealPipeline() {
                       {opp.stageName}
                     </span>
                   </td>
-                  <td className="p-4 text-white font-bold">${(opp.amount || 0).toLocaleString()}</td>
+<td className="p-4 text-white font-bold">{formatCurrency(opp.amount)}</td>
                   <td className="p-4 text-white">{opp.probability}%</td>
                   <td className="p-4 text-slate-400">{opp.closeDate}</td>
                   <td className="p-4 text-slate-400">{opp.ownerId}</td>

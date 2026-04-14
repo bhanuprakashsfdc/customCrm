@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatCurrency } from '@/src/lib/currency';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
@@ -82,6 +83,7 @@ export default function OrderPipeline() {
               }
             }}
             onExport={() => Object.values(data.orders)}
+            onNew={() => setModalOpen(true)}
             fields={['orderNumber', 'accountId', 'quoteId', 'total', 'status', 'orderDate']}
           />
         </div>
@@ -93,7 +95,7 @@ export default function OrderPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Revenue</span>
           </div>
-          <p className="text-2xl font-bold text-white">${(totalRevenue / 1000).toFixed(0)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue, config.localization.currency, config.localization.showAllCurrencies)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -171,7 +173,7 @@ export default function OrderPipeline() {
                     </span>
                   </td>
                   <td className="p-4 text-white">-</td>
-                  <td className="p-4 text-white">${(order.totalAmount || 0).toLocaleString()}</td>
+                  <td className="p-4 text-white">{formatCurrency(order.totalAmount || 0, config.localization.currency, config.localization.showAllCurrencies)}</td>
                   <td className="p-4 text-slate-400">{order.effectiveDate || '-'}</td>
                   <td className="p-4 text-slate-400">{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '-'}</td>
                   <td className="p-4">

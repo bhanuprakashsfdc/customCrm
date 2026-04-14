@@ -24,6 +24,7 @@ interface DataContextType {
   contacts: any[];
   leads: any[];
   opportunities: any[];
+  users: any[];
   saveRecord: (type: keyof StorageData, record: any) => Promise<void>;
   deleteRecord: (type: keyof StorageData, id: string) => Promise<void>;
   getRecord: (type: keyof StorageData, id: string) => any;
@@ -71,9 +72,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const newData: StorageData = { ...defaultData };
       
       for (const table of tables) {
-        const response = await fetch(`${API_BASE}/${table}`);
+        const token = localStorage.getItem('crm_jwt') || '';
+        const headers = new Headers({'Content-Type': 'application/json'});
+        if (token) {
+          headers.append('Authorization', `Bearer ${token}`);
+        }
+        const response = await fetch(`${API_BASE}/${table}?limit=500`, { headers });
         if (response.ok) {
-          const rows = await response.json();
+          const result = await response.json();
+          const rows = result.data || result; // fallback if no pagination
           (newData[table as keyof StorageData] as Record<string, any>) = {};
           rows.forEach((row: any) => {
             newData[table as keyof StorageData][row.id] = row;
@@ -108,9 +115,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     try {
+      const token = localStorage.getItem('crm_jwt') || '';
+      const headers = new Headers({ 'Content-Type': 'application/json' });
+      if (token) headers.append('Authorization', `Bearer ${token}`);
       const response = await fetch(`${API_BASE}/${type}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(recordWithId),
       });
 
@@ -127,8 +137,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteRecord = async (type: keyof StorageData, id: string) => {
     try {
+      const token = localStorage.getItem('crm_jwt') || '';
+      const headers = new Headers();
+      if (token) headers.append('Authorization', `Bearer ${token}`);
       const response = await fetch(`${API_BASE}/${type}/${id}`, {
         method: 'DELETE',
+        headers,
       });
 
       if (!response.ok) {
@@ -202,6 +216,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const contacts = Object.values(data.contacts);
   const leads = Object.values(data.leads);
   const opportunities = Object.values(data.opportunities);
+  const users = Object.values(data.users);
 
   const refreshData = async () => {
     await fetchAllData();
@@ -215,6 +230,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         contacts,
         leads,
         opportunities,
+        users,
         saveRecord,
         deleteRecord,
         getRecord,
