@@ -118,8 +118,15 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--font-sans', `"${theme.fonts.body}", sans-serif`);
   }, []);
 
-  const updateConfig = useCallback((updates: Partial<AppConfig>) => {
+  const updateConfig = useCallback(async (updates: Partial<AppConfig>) => {
     setConfig(prev => ({ ...prev, ...updates }));
+    try {
+      await fetch('/api/config', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updates.localization || updates)
+      });
+    } catch {}
   }, []);
 
   const updateThemeColor = useCallback((key: keyof ThemeColors, value: string) => {

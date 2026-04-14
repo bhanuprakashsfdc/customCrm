@@ -26,8 +26,9 @@ const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'colors', label: 'Colors', icon: <Palette className="w-4 h-4" /> },
   { id: 'branding', label: 'Branding', icon: <Building2 className="w-4 h-4" /> },
   { id: 'content', label: 'Content', icon: <Type className="w-4 h-4" /> },
+  { id: 'system', label: 'System', icon: <Globe className="w-4 h-4" /> },
   { id: 'features', label: 'Features', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'import', label: 'Import', icon: <Globe className="w-4 h-4" /> },
+  { id: 'import', label: 'Import/Export', icon: <Download className="w-4 h-4" /> },
   { id: 'reset', label: 'Reset', icon: <Database className="w-4 h-4" /> },
 ];
 
@@ -254,6 +255,22 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
             </div>
           )}
 
+          {activeTab === 'system' && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs text-slate-400 font-medium">Currency</label>
+                <select
+                  value={config.localization.currency}
+                  onChange={(e) => updateConfig({ localization: { ...config.localization, currency: e.target.value as 'INR' | 'USD' | 'EUR' } })}
+                  className="w-full bg-surface-container-lowest border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:border-primary/50 focus:outline-none"
+                >
+                  <option value="INR">₹ INR (India)</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+              </div>
+            </div>
+          )}
           {activeTab === 'features' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">

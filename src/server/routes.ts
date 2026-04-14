@@ -1,5 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { getPool } from './database';
+import { authUser, authAdmin } from './auth';
+import bcrypt from 'bcryptjs';
+import { updateConfig } from './config';
 
 const router = Router();
 
@@ -10,19 +13,22 @@ const objectTypes = [
 ];
 
 for (const type of objectTypes) {
-  router.get(`/${type}`, async (req: Request, res: Response) => {
+  router.get(`/${type}`, authUser, async (req: Request, res: Response) => {
     try {
       const pool = getPool();
-      const [rows]: any = await pool.query(`SELECT * FROM ${type}`);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = (page - 1) * limit;
+      const [rows]: any = await pool.query(`SELECT * FROM ${type} LIMIT ? OFFSET ?`, [limit, offset]);
       console.log(`Fetched ${type}:`, rows);
-      res.json(rows);
+      res.json({ data: rows, page, limit, offset });
     } catch (error) {
       console.error(`Error fetching ${type}:`, error);
       res.status(500).json({ error: `Failed to fetch ${type}` });
     }
   });
 
-  router.get(`/${type}/:id`, async (req: Request, res: Response) => {
+  router.get(`/${type}/:id`, authUser, async (req: Request, res: Response) => {
     try {
       const pool = getPool();
       const [rows]: any = await pool.execute(
@@ -39,10 +45,18 @@ for (const type of objectTypes) {
     }
   });
 
-  router.post(`/${type}`, async (req: Request, res: Response) => {
+router.post(`/${type}`, authUser, async (req: Request, res: Response) => {
     try {
       const pool = getPool();
       const record = req.body;
+      console.log(`Creating ${type}:`, record);
+      if (type === 'users') {
+        record.role = record.role || 'user';
+        if (record.password) {
+          record.hashed_password = await bcrypt.hash(record.password, 10);
+        }
+        delete record.password;
+      }
       record.id = record.id || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       record.createdAt = record.createdAt || new Date();
       record.updatedAt = new Date();
@@ -62,7 +76,7 @@ for (const type of objectTypes) {
     }
   });
 
-  router.put(`/${type}/:id`, async (req: Request, res: Response) => {
+  router.put(`/${type}/:id`, authUser, async (req: Request, res: Response) => {
     try {
       const pool = getPool();
       const record = req.body;
@@ -84,7 +98,7 @@ for (const type of objectTypes) {
     }
   });
 
-  router.delete(`/${type}/:id`, async (req: Request, res: Response) => {
+  router.delete(`/${type}/:id`, authUser, async (req: Request, res: Response) => {
     try {
       const pool = getPool();
       await pool.execute(`DELETE FROM ${type} WHERE id = ?`, [req.params.id]);
@@ -95,5 +109,26 @@ for (const type of objectTypes) {
     }
   });
 }
+
+// Config routes
+router.get('/config', authUser, async (req: Request, res: Response) => {
+  try {
+    const { getConfig } = await import('./config');
+    const config = await getConfig();
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ error: 'Config error' });
+  }
+});
+
+router.put('/config', authAdmin, async (req: Request, res: Response) => {
+  try {
+    const { updateConfig } = await import('./config');
+    const config = await updateConfig(req.body);
+    res.json(config);
+  } catch (error) {
+    res.status(500).json({ error: 'Config update failed' });
+  }
+});
 
 export default router;

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
 import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
+import { formatCurrency } from '@/src/lib/currency';
 import { 
   Handshake, 
   TrendingUp, 
@@ -185,7 +186,7 @@ export default function DealPipeline() {
                       {opp.stageName}
                     </span>
                   </td>
-                  <td className="p-4 text-white font-bold">${(opp.amount || 0).toLocaleString()}</td>
+<td className="p-4 text-white font-bold">{formatCurrency(opp.amount)}</td>
                   <td className="p-4 text-white">{opp.probability}%</td>
                   <td className="p-4 text-slate-400">{opp.closeDate}</td>
                   <td className="p-4 text-slate-400">{opp.ownerId}</td>

@@ -143,18 +143,31 @@ export async function initializeDatabase() {
       createdAt DATETIME,
       updatedAt DATETIME
     )`,
+    `CREATE TABLE IF NOT EXISTS config (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      currency VARCHAR(10) DEFAULT 'INR',
+      defaultRole VARCHAR(20) DEFAULT 'user',
+      updatedAt DATETIME
+    )`,
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255),
-      email VARCHAR(255),
-      password VARCHAR(255),
-      role VARCHAR(255),
+      email VARCHAR(255) UNIQUE,
+      hashed_password VARCHAR(255),
+      role VARCHAR(255) DEFAULT 'user',
       createdAt DATETIME,
       updatedAt DATETIME
-    )`,
+    )`
   ];
 
-  for (const sql of tables) {
+  const indexes = [
+    `CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status)`,
+    `CREATE INDEX IF NOT EXISTS idx_opportunities_stage ON opportunities(stage)`,
+    `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
+    `CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`
+  ];
+
+  for (const sql of [...tables, ...indexes]) {
     await pool.execute(sql);
   }
   

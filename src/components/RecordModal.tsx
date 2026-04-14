@@ -17,10 +17,11 @@ import {
   DollarSign,
   Briefcase,
   FileText,
-  ChevronDown
+  ChevronDown,
+  UserCircle
 } from 'lucide-react';
 
-export type ObjectType = 'account' | 'lead' | 'contact' | 'opportunity' | 'order' | 'case';
+export type ObjectType = 'account' | 'lead' | 'contact' | 'opportunity' | 'order' | 'case' | 'user';
 
 export interface RecordFormData {
   account: {
@@ -73,6 +74,12 @@ export interface RecordFormData {
     priority: string;
     type: string;
     origin: string;
+  };
+  user: {
+    name: string;
+    email: string;
+    role: string;
+    password: string;
   };
 }
 
@@ -163,6 +170,17 @@ const objectConfig = {
       { name: 'priority', label: 'Priority', type: 'select', options: ['High', 'Medium', 'Low'], required: true },
       { name: 'type', label: 'Case Type', type: 'select', options: ['Technical', 'Billing', 'Bug', 'Feature Request', 'Training'], required: true },
       { name: 'origin', label: 'Origin', type: 'select', options: ['Email', 'Phone', 'Web'], required: true },
+    ],
+  },
+  user: {
+    title: 'New User',
+    icon: UserCircle,
+    color: 'purple',
+    fields: [
+      { name: 'name', label: 'Name', type: 'text', required: true },
+      { name: 'email', label: 'Email', type: 'email', required: true },
+      { name: 'password', label: 'Password', type: 'password', required: true },
+      { name: 'role', label: 'Role', type: 'select', options: ['Admin', 'Manager', 'User', 'Viewer'], required: true },
     ],
   },
 };
