@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Building2, 
@@ -15,17 +16,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import RecordModal from './RecordModal';
-
-const accountData = [
-  { id: '1', name: 'Acme Corporation', type: 'Customer', industry: 'Technology', website: 'acme.com', phone: '+1 555-0100', annualRevenue: 50000000, numberOfEmployees: 500, city: 'San Francisco', state: 'CA', country: 'USA', rating: 'Hot' },
-  { id: '2', name: 'TechStart Inc', type: 'Prospect', industry: 'Software', website: 'techstart.io', phone: '+1 555-0200', annualRevenue: 5000000, numberOfEmployees: 50, city: 'Austin', state: 'TX', country: 'USA', rating: 'Warm' },
-  { id: '3', name: 'Global Systems Ltd', type: 'Customer', industry: 'Consulting', website: 'globalsystems.com', phone: '+44 20 7946 0958', annualRevenue: 25000000, numberOfEmployees: 250, city: 'London', state: '', country: 'UK', rating: 'Active' },
-  { id: '4', name: 'InnovateTech', type: 'Prospect', industry: 'Fintech', website: 'innovatetech.com', phone: '+1 555-0300', annualRevenue: 10000000, numberOfEmployees: 100, city: 'New York', state: 'NY', country: 'USA', rating: 'Hot' },
-  { id: '5', name: 'DataFlow Analytics', type: 'Customer', industry: 'Data Services', website: 'dataflow.io', phone: '+1 555-0400', annualRevenue: 15000000, numberOfEmployees: 150, city: 'Seattle', state: 'WA', country: 'USA', rating: 'Active' },
-  { id: '6', name: 'CloudNine Systems', type: 'Partner', industry: 'Cloud Computing', website: 'cloudnine.cloud', phone: '+1 555-0500', annualRevenue: 75000000, numberOfEmployees: 750, city: 'Boston', state: 'MA', country: 'USA', rating: 'Hot' },
-  { id: '7', name: 'Alpha Industries', type: 'Prospect', industry: 'Manufacturing', website: 'alphaind.com', phone: '+1 555-0600', annualRevenue: 100000000, numberOfEmployees: 1000, city: 'Chicago', state: 'IL', country: 'USA', rating: 'Warm' },
-  { id: '8', name: 'Beta Ventures', type: 'Competitor', industry: 'Venture Capital', website: 'betaventures.vc', phone: '+1 555-0700', annualRevenue: 20000000, numberOfEmployees: 75, city: 'Palo Alto', state: 'CA', country: 'USA', rating: 'Active' },
-];
+import BulkUpload from './BulkUpload';
 
 const typeColors: Record<string, string> = {
   'Prospect': 'bg-amber-500/20 text-amber-400',
@@ -36,29 +27,38 @@ const typeColors: Record<string, string> = {
 };
 
 const ratingColors: Record<string, string> = {
-  'Hot': 'bg-red-500/20 text-red-400',
-  'Warm': 'bg-amber-500/20 text-amber-400',
-  'Cold': 'bg-blue-500/20 text-blue-400',
+  'Acquired': 'bg-red-500/20 text-red-400',
   'Active': 'bg-emerald-500/20 text-emerald-400',
+  'Market': 'bg-amber-500/20 text-amber-400',
   'Inactive': 'bg-slate-500/20 text-slate-400',
 };
 
 export default function AccountPipeline() {
   const { config } = useConfig();
+  const { accounts, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredAccounts = filter === 'all' 
-    ? accountData 
-    : accountData.filter(a => a.type === filter);
+    ? accounts 
+    : accounts.filter(a => a.type === filter);
 
-  const totalRevenue = accountData.reduce((sum, a) => sum + a.annualRevenue, 0);
-  const totalEmployees = accountData.reduce((sum, a) => sum + a.numberOfEmployees, 0);
-  const customers = accountData.filter(a => a.type === 'Customer').length;
-  const prospects = accountData.filter(a => a.type === 'Prospect').length;
+  const totalRevenue = accounts.reduce((sum, a) => sum + (a.annualRevenue || 0), 0);
+  const totalEmployees = accounts.reduce((sum, a) => sum + (a.numberOfEmployees || 0), 0);
+  const customers = accounts.filter(a => a.type === 'Customer').length;
+  const prospects = accounts.filter(a => a.type === 'Prospect').length;
 
   const handleSave = (data: any) => {
-    console.log('New Account:', data);
+    const record = {
+      name: data.name,
+      type: data.type,
+      industry: data.industry,
+      website: data.website,
+      phone: data.phone,
+      rating: data.rating,
+      ownerId: 'user_001',
+    };
+    saveRecord('accounts', record);
   };
 
   return (
@@ -74,13 +74,16 @@ export default function AccountPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Accounts</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Customer and prospect account management.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Account
-        </button>
+        <BulkUpload
+          objectType="Account"
+          onUpload={async (data) => {
+            for (const item of data) {
+              await saveRecord('accounts', { ...item, ownerId: 'user_001' });
+            }
+          }}
+          onExport={() => accounts}
+          fields={['name', 'type', 'industry', 'website', 'phone', 'rating', 'billingAddress', 'shippingAddress']}
+        />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -167,14 +170,14 @@ export default function AccountPipeline() {
                   </td>
                   <td className="p-4 text-slate-400">{account.industry}</td>
                   <td className="p-4">
-                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", ratingColors[account.rating] || ratingColors['Cold'])}>
-                      {account.rating}
+                    <span className={cn("px-3 py-1 text-xs font-bold rounded-full", ratingColors[account.rating] || ratingColors['Inactive'])}>
+                      {account.rating || 'Inactive'}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${(account.annualRevenue / 1000000).toFixed(1)}M</td>
-                  <td className="p-4 text-white">{account.numberOfEmployees.toLocaleString()}</td>
+                  <td className="p-4 text-white">${((account.annualRevenue || 0) / 1000000).toFixed(1)}M</td>
+                  <td className="p-4 text-white">{(account.numberOfEmployees || 0).toLocaleString()}</td>
                   <td className="p-4 text-slate-400">
-                    {account.city}, {account.state} {account.country}
+                    {account.billingCity}, {account.billingState} {account.billingCountry}
                   </td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">

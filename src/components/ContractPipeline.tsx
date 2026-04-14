@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   FileText, 
@@ -12,14 +13,7 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
-
-const contractData = [
-  { id: '1', contractNumber: 'CON-2026-001', accountName: 'Acme Corporation', type: 'MSA', status: 'Activated', startDate: '2026-01-01', endDate: '2026-12-31', value: 250000, renewalDate: '2026-11-01' },
-  { id: '2', contractNumber: 'CON-2026-002', accountName: 'TechStart Inc', type: 'Annual', status: 'In Approval', startDate: '2026-04-01', endDate: '2027-03-31', value: 85000, renewalDate: '2027-02-01' },
-  { id: '3', contractNumber: 'CON-2025-045', accountName: 'Global Systems Ltd', type: 'SOW', status: 'Expired', startDate: '2025-04-01', endDate: '2026-03-31', value: 175000, renewalDate: '2026-02-01' },
-  { id: '4', contractNumber: 'CON-2026-003', accountName: 'InnovateTech', type: 'NDA', status: 'Draft', startDate: '2026-05-01', endDate: '2028-04-30', value: 0, renewalDate: '2028-03-01' },
-  { id: '5', contractNumber: 'CON-2026-004', accountName: 'DataFlow Analytics', type: 'MSA', status: 'Activated', startDate: '2026-03-15', endDate: '2027-03-14', value: 320000, renewalDate: '2027-02-15' },
-];
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -37,15 +31,18 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function ContractPipeline() {
   const { config } = useConfig();
+  const { data, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
 
-  const filteredContracts = filter === 'all' 
-    ? contractData 
-    : contractData.filter(c => c.status.toLowerCase() === filter.toLowerCase() || (filter === 'Active' && c.status === 'Activated'));
+  const contracts = Object.values(data.contracts);
 
-  const totalValue = contractData.reduce((sum, c) => sum + c.value, 0);
-  const activeContracts = contractData.filter(c => c.status === 'Activated').length;
-  const expiringSoon = contractData.filter(c => new Date(c.endDate) < new Date('2026-07-01')).length;
+  const filteredContracts = filter === 'all' 
+    ? contracts 
+    : contracts.filter(c => (c.status || '').toLowerCase() === filter.toLowerCase() || (filter === 'Active' && c.status === 'Activated'));
+
+  const totalValue = contracts.reduce((sum, c) => sum + (c.totalContractValue || 0), 0);
+  const activeContracts = contracts.filter(c => c.status === 'Activated').length;
+  const expiringSoon = contracts.filter(c => c.endDate && new Date(c.endDate) < new Date('2026-07-01')).length;
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
@@ -54,10 +51,18 @@ export default function ContractPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Contracts</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Contract lifecycle management and renewals.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Contract
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Contract"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('contracts', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.contracts)}
+            fields={['contractNumber', 'accountId', 'value', 'startDate', 'endDate', 'status']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -80,7 +85,7 @@ export default function ContractPipeline() {
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">In Approval</span>
           </div>
-          <p className="text-2xl font-bold text-white">{contractData.filter(c => c.status === 'In Approval').length}</p>
+          <p className="text-2xl font-bold text-white">{contracts.filter(c => c.status === 'In Approval').length}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -135,18 +140,18 @@ export default function ContractPipeline() {
                       <span className="font-semibold text-white">{contract.contractNumber}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-white">{contract.accountName}</td>
-                  <td className="p-4 text-slate-400">{contract.type}</td>
+                  <td className="p-4 text-white">{getAccountName(contract.accountId)}</td>
+                  <td className="p-4 text-slate-400">{contract.contractType}</td>
                   <td className="p-4">
                     <span className={cn("px-3 py-1 text-xs font-bold rounded-full flex items-center gap-1 w-fit", statusColors[contract.status])}>
                       {statusIcons[contract.status]}
                       {contract.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${contract.value.toLocaleString()}</td>
-                  <td className="p-4 text-slate-400">{contract.startDate}</td>
-                  <td className="p-4 text-slate-400">{contract.endDate}</td>
-                  <td className="p-4 text-amber-400">{contract.renewalDate}</td>
+                  <td className="p-4 text-white">${(contract.totalContractValue || 0).toLocaleString()}</td>
+                  <td className="p-4 text-slate-400">{contract.startDate || '-'}</td>
+                  <td className="p-4 text-slate-400">{contract.endDate || '-'}</td>
+                  <td className="p-4 text-amber-400">{contract.endDate ? new Date(new Date(contract.endDate).setMonth(new Date(contract.endDate).getMonth() - 1)).toISOString().split('T')[0] : '-'}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">
                       <MoreHorizontal className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   FileCheck, 
@@ -13,14 +14,7 @@ import {
   XCircle,
   Send
 } from 'lucide-react';
-
-const quoteData = [
-  { id: '1', name: 'Q-2026-001', opportunityName: 'Acme Corp Expansion', accountName: 'Acme Corporation', status: 'Accepted', expirationDate: '2026-04-30', totalPrice: 95000, grandTotal: 112500 },
-  { id: '2', name: 'Q-2026-002', opportunityName: 'TechStart Enterprise Deal', accountName: 'TechStart Inc', status: 'Sent', expirationDate: '2026-05-15', totalPrice: 156000, grandTotal: 184000 },
-  { id: '3', name: 'Q-2026-003', opportunityName: 'Global Systems Renewal', accountName: 'Global Systems Ltd', status: 'Draft', expirationDate: '2026-05-30', totalPrice: 78000, grandTotal: 92000 },
-  { id: '4', name: 'Q-2026-004', opportunityName: 'InnovateTech Startup', accountName: 'InnovateTech', status: 'Rejected', expirationDate: '2026-04-01', totalPrice: 24000, grandTotal: 28000 },
-  { id: '5', name: 'Q-2026-005', opportunityName: 'DataFlow Annual', accountName: 'DataFlow Analytics', status: 'Accepted', expirationDate: '2026-04-25', totalPrice: 320000, grandTotal: 376000 },
-];
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -40,15 +34,18 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function QuotePipeline() {
   const { config } = useConfig();
+  const { data, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
 
-  const filteredQuotes = filter === 'all' 
-    ? quoteData 
-    : quoteData.filter(q => q.status === filter);
+  const quotes = Object.values(data.quotes);
 
-  const totalValue = quoteData.reduce((sum, q) => sum + q.grandTotal, 0);
-  const acceptedValue = quoteData.filter(q => q.status === 'Accepted').reduce((sum, q) => sum + q.grandTotal, 0);
-  const winRate = (quoteData.filter(q => q.status === 'Accepted').length / quoteData.length * 100).toFixed(0);
+  const filteredQuotes = filter === 'all' 
+    ? quotes 
+    : quotes.filter(q => q.status === filter);
+
+  const totalValue = quotes.reduce((sum, q) => sum + (q.grandTotal || 0), 0);
+  const acceptedValue = quotes.filter(q => q.status === 'Accepted').reduce((sum, q) => sum + (q.grandTotal || 0), 0);
+  const winRate = quotes.length > 0 ? (quotes.filter(q => q.status === 'Accepted').length / quotes.length * 100).toFixed(0) : '0';
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
@@ -57,10 +54,18 @@ export default function QuotePipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Quotes</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Quote management and pricing proposals.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Quote
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Quote"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('quotes', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.quotes)}
+            fields={['quoteNumber', 'accountId', 'opportunityId', 'total', 'status', 'validUntil']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -90,7 +95,7 @@ export default function QuotePipeline() {
             <FileCheck className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Quotes</span>
           </div>
-          <p className="text-2xl font-bold text-white">{quoteData.length}</p>
+          <p className="text-2xl font-bold text-white">{quotes.length}</p>
         </div>
       </div>
 
@@ -137,17 +142,17 @@ export default function QuotePipeline() {
                       <span className="font-semibold text-white">{quote.name}</span>
                     </div>
                   </td>
-                  <td className="p-4 text-white">{quote.opportunityName}</td>
-                  <td className="p-4 text-slate-400">{quote.accountName}</td>
+                  <td className="p-4 text-white">{quote.opportunityId ? quote.name : '-'}</td>
+                  <td className="p-4 text-white">{quote.accountId || '-'}</td>
                   <td className="p-4">
                     <span className={cn("px-3 py-1 text-xs font-bold rounded-full flex items-center gap-1 w-fit", statusColors[quote.status])}>
                       {statusIcons[quote.status]}
                       {quote.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">${quote.totalPrice.toLocaleString()}</td>
-                  <td className="p-4 text-white font-bold">${quote.grandTotal.toLocaleString()}</td>
-                  <td className="p-4 text-slate-400">{quote.expirationDate}</td>
+                  <td className="p-4 text-white">${(quote.totalPrice || 0).toLocaleString()}</td>
+                  <td className="p-4 text-white font-bold">${(quote.grandTotal || 0).toLocaleString()}</td>
+                  <td className="p-4 text-slate-400">{quote.expirationDate || '-'}</td>
                   <td className="p-4">
                     <button className="p-2 text-slate-400 hover:text-white transition-colors">
                       <MoreHorizontal className="w-4 h-4" />

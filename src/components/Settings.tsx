@@ -9,7 +9,8 @@ import {
   Upload,
   RotateCcw,
   X,
-  Check
+  Check,
+  Database
 } from 'lucide-react';
 import { useConfig, ThemeColors } from '@/src/context/ConfigContext';
 import { cn } from '@/src/lib/utils';
@@ -19,14 +20,15 @@ interface SettingsProps {
   onClose: () => void;
 }
 
-type TabId = 'colors' | 'branding' | 'content' | 'features' | 'import';
+type TabId = 'colors' | 'branding' | 'content' | 'features' | 'import' | 'reset';
 
 const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'colors', label: 'Colors', icon: <Palette className="w-4 h-4" /> },
   { id: 'branding', label: 'Branding', icon: <Building2 className="w-4 h-4" /> },
   { id: 'content', label: 'Content', icon: <Type className="w-4 h-4" /> },
   { id: 'features', label: 'Features', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'import', label: 'Import/Export', icon: <Globe className="w-4 h-4" /> },
+  { id: 'import', label: 'Import', icon: <Globe className="w-4 h-4" /> },
+  { id: 'reset', label: 'Reset', icon: <Database className="w-4 h-4" /> },
 ];
 
 const colorFields: { key: keyof ThemeColors; label: string }[] = [
@@ -53,6 +55,22 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
   const [importText, setImportText] = useState('');
   const [importError, setImportError] = useState('');
   const [showImportSuccess, setShowImportSuccess] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetData = async () => {
+    setResetting(true);
+    try {
+      const res = await fetch('/api/reset', { method: 'POST' });
+      if (res.ok) {
+        setShowResetModal(false);
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    setResetting(false);
+  };
 
   const handleExport = () => {
     const json = exportConfig();
@@ -354,14 +372,50 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
                   Import Config
                 </button>
               </div>
+            </div>
+          )}
 
-              <button
-                onClick={resetConfig}
-                className="w-full flex items-center justify-center gap-2 py-2 text-red-400 hover:text-red-300 text-sm transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Reset to Default
-              </button>
+          {activeTab === 'reset' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-surface-container-low rounded-xl border border-white/5">
+                <p className="text-sm text-slate-400 mb-4">
+                  This will permanently delete all your data including accounts, contacts, leads, opportunities, tasks, events, campaigns, quotes, orders, contracts, and products. This action cannot be undone.
+                </p>
+                <button
+                  onClick={() => setShowResetModal(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Database className="w-4 h-4" />
+                  Reset All Data
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showResetModal && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/70" onClick={() => setShowResetModal(false)} />
+              <div className="relative bg-surface-container rounded-2xl p-6 max-w-sm w-full mx-4 border border-white/10 shadow-2xl">
+                <h3 className="text-lg font-bold text-white mb-2">Reset All Data?</h3>
+                <p className="text-sm text-slate-400 mb-4">
+                  This will permanently delete all your records (accounts, contacts, leads, opportunities, etc.). This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowResetModal(false)}
+                    className="flex-1 py-2 bg-surface-container-high text-slate-300 rounded-lg text-sm font-medium hover:bg-surface-container-high/80"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResetData}
+                    disabled={resetting}
+                    className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-500 disabled:opacity-50"
+                  >
+                    {resetting ? 'Resetting...' : 'Yes, Delete All'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

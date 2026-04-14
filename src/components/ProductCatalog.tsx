@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Package, 
@@ -13,17 +14,6 @@ import {
   Archive
 } from 'lucide-react';
 
-const productData = [
-  { id: '1', name: 'Enterprise Suite', productCode: 'PROD-001', family: 'Software', isActive: true, unitPrice: 2500, description: 'Full enterprise solution with all features' },
-  { id: '2', name: 'Professional Suite', productCode: 'PROD-002', family: 'Software', isActive: true, unitPrice: 1200, description: 'Professional tier with advanced features' },
-  { id: '3', name: 'Starter Suite', productCode: 'PROD-003', family: 'Software', isActive: true, unitPrice: 499, description: 'Basic package for small teams' },
-  { id: '4', name: 'API Integration Module', productCode: 'PROD-004', family: 'Add-On', isActive: true, unitPrice: 799, description: 'REST API access for custom integrations' },
-  { id: '5', name: 'Analytics Premium', productCode: 'PROD-005', family: 'Add-On', isActive: true, unitPrice: 599, description: 'Advanced analytics and reporting' },
-  { id: '6', name: 'Legacy System Connector', productCode: 'PROD-006', family: 'Add-On', isActive: false, unitPrice: 1499, description: 'Connect to legacy ERP systems' },
-  { id: '7', name: 'Support - Gold', productCode: 'PROD-007', family: 'Service', isActive: true, unitPrice: 1500, description: '24/7 premium support' },
-  { id: '8', name: 'Support - Standard', productCode: 'PROD-008', family: 'Service', isActive: true, unitPrice: 500, description: 'Business hours support' },
-];
-
 const familyColors: Record<string, string> = {
   'Software': 'bg-indigo-500/20 text-indigo-400',
   'Add-On': 'bg-amber-500/20 text-amber-400',
@@ -32,17 +22,20 @@ const familyColors: Record<string, string> = {
 
 export default function ProductCatalog() {
   const { config } = useConfig();
+  const { data } = useData();
   const [filter, setFilter] = useState('all');
 
-  const filteredProducts = filter === 'all' 
-    ? productData 
-    : filter === 'active' 
-      ? productData.filter(p => p.isActive)
-      : productData.filter(p => !p.isActive);
+  const products = Object.values(data.products);
 
-  const activeProducts = productData.filter(p => p.isActive).length;
-  const totalValue = productData.reduce((sum, p) => sum + (p.isActive ? p.unitPrice : 0), 0);
-  const families = [...new Set(productData.map(p => p.family))];
+  const filteredProducts = filter === 'all' 
+    ? products 
+    : filter === 'active' 
+      ? products.filter(p => p.isActive)
+      : products.filter(p => !p.isActive);
+
+  const activeProducts = products.filter(p => p.isActive).length;
+  const totalValue = products.reduce((sum, p) => sum + (p.isActive ? p.unitPrice : 0), 0);
+  const families = [...new Set(products.map(p => p.family).filter(Boolean))];
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
@@ -63,7 +56,7 @@ export default function ProductCatalog() {
             <Package className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Products</span>
           </div>
-          <p className="text-2xl font-bold text-white">{productData.length}</p>
+          <p className="text-2xl font-bold text-white">{products.length}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">

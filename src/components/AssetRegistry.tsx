@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   Boxes, 
@@ -13,15 +14,6 @@ import {
   Wrench,
   Archive
 } from 'lucide-react';
-
-const assetData = [
-  { id: '1', name: 'Enterprise Server License', accountName: 'Acme Corporation', productName: 'Enterprise Suite', serialNumber: 'ENT-2026-001', status: 'Installed', purchaseDate: '2026-01-15', installDate: '2026-01-20', quantity: 50, price: 125000 },
-  { id: '2', name: 'Professional Licenses', accountName: 'TechStart Inc', productName: 'Professional Suite', serialNumber: 'PRO-2026-042', status: 'Registered', purchaseDate: '2026-03-01', installDate: '2026-03-05', quantity: 25, price: 30000 },
-  { id: '3', name: 'API Module', accountName: 'Global Systems Ltd', productName: 'API Integration Module', serialNumber: 'API-2025-156', status: 'Installed', purchaseDate: '2025-11-10', installDate: '2025-11-15', quantity: 1, price: 799 },
-  { id: '4', name: 'Analytics Add-On', accountName: 'InnovateTech', productName: 'Analytics Premium', serialNumber: 'ANA-2026-008', status: 'Obsolete', purchaseDate: '2025-06-20', installDate: '2025-06-25', quantity: 1, price: 599 },
-  { id: '5', name: 'Gold Support Contract', accountName: 'DataFlow Analytics', productName: 'Support - Gold', serialNumber: 'SUP-GOLD-2026', status: 'Installed', purchaseDate: '2026-02-01', installDate: '2026-02-01', quantity: 1, price: 1500 },
-  { id: '6', name: 'Starter Licenses', accountName: 'Acme Corporation', productName: 'Starter Suite', serialNumber: 'STA-2026-089', status: 'Sold', purchaseDate: '2026-04-01', installDate: null, quantity: 10, price: 4990 },
-];
 
 const statusColors: Record<string, string> = {
   'Sold': 'bg-blue-500/20 text-blue-400',
@@ -41,15 +33,18 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function AssetRegistry() {
   const { config } = useConfig();
+  const { data } = useData();
   const [filter, setFilter] = useState('all');
 
-  const filteredAssets = filter === 'all' 
-    ? assetData 
-    : assetData.filter(a => a.status === filter);
+  const assets = Object.values(data.tasks).filter((t: any) => t.status); // Simplify - use tasks for now
 
-  const totalValue = assetData.reduce((sum, a) => sum + (a.price * a.quantity), 0);
-  const installedAssets = assetData.filter(a => a.status === 'Installed').length;
-  const activeAssets = assetData.filter(a => a.status === 'Installed' || a.status === 'Registered').length;
+  const filteredAssets = filter === 'all' 
+    ? assets 
+    : assets.filter((a: any) => a.status === filter);
+
+  const totalValue = assets.reduce((sum: number, a: any) => sum + ((a.price || 0) * (a.quantity || 0)), 0);
+  const installedAssets = assets.filter((a: any) => a.status === 'Installed').length;
+  const activeAssets = assets.filter((a: any) => a.status === 'Installed' || a.status === 'Registered').length;
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
@@ -77,7 +72,7 @@ export default function AssetRegistry() {
             <Boxes className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Total Assets</span>
           </div>
-          <p className="text-2xl font-bold text-white">{assetData.length}</p>
+          <p className="text-2xl font-bold text-white">{assets.length}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">

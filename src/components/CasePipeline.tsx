@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useConfig } from '@/src/context/ConfigContext';
+import { useData } from '@/src/context/DataContext';
 import { cn } from '@/src/lib/utils';
 import { 
   HeadphonesIcon, 
@@ -14,17 +15,7 @@ import {
   Send
 } from 'lucide-react';
 import RecordModal from './RecordModal';
-
-const caseData = [
-  { id: '1', caseNumber: 'CS-2026-001', subject: 'Login issues with SSO integration', accountName: 'Acme Corporation', contactName: 'John Smith', status: 'New', priority: 'High', type: 'Technical', origin: 'Email', createdDate: '2026-04-13', closedDate: null },
-  { id: '2', caseNumber: 'CS-2026-002', subject: 'Billing discrepancy for March invoice', accountName: 'TechStart Inc', contactName: 'Jane Doe', status: 'Working', priority: 'Medium', type: 'Billing', origin: 'Web', createdDate: '2026-04-12', closedDate: null },
-  { id: '3', caseNumber: 'CS-2026-003', subject: 'Feature request: API rate limit increase', accountName: 'Global Systems Ltd', contactName: 'Mike Wilson', status: 'Escalated', priority: 'Low', type: 'Feature Request', origin: 'Phone', createdDate: '2026-04-10', closedDate: null },
-  { id: '4', caseNumber: 'CS-2026-004', subject: 'Data export not working', accountName: 'InnovateTech', contactName: 'Sarah Johnson', status: 'Closed', priority: 'High', type: 'Bug', origin: 'Email', createdDate: '2026-04-08', closedDate: '2026-04-11' },
-  { id: '5', caseNumber: 'CS-2026-005', subject: 'Need training for new users', accountName: 'DataFlow Analytics', contactName: 'Tom Brown', status: 'New', priority: 'Low', type: 'Training', origin: 'Web', createdDate: '2026-04-13', closedDate: null },
-  { id: '6', caseNumber: 'CS-2026-006', subject: 'Integration timeout errors', accountName: 'CloudNine Systems', contactName: 'Lisa Chen', status: 'Working', priority: 'High', type: 'Technical', origin: 'Email', createdDate: '2026-04-11', closedDate: null },
-  { id: '7', caseNumber: 'CS-2026-007', subject: 'Password reset not sending email', accountName: 'Alpha Industries', contactName: 'David Lee', status: 'Closed', priority: 'Medium', type: 'Bug', origin: 'Phone', createdDate: '2026-04-05', closedDate: '2026-04-06' },
-  { id: '8', caseNumber: 'CS-2026-008', subject: 'Custom report not loading', accountName: 'Beta Ventures', contactName: 'Emma Davis', status: 'Escalated', priority: 'Medium', type: 'Bug', origin: 'Web', createdDate: '2026-04-09', closedDate: null },
-];
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'New': 'bg-blue-500/20 text-blue-400',
@@ -56,20 +47,33 @@ const typeColors: Record<string, string> = {
 
 export default function CasePipeline() {
   const { config } = useConfig();
+  const { data, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
 
-  const filteredCases = filter === 'all' 
-    ? caseData 
-    : caseData.filter(c => c.status === filter);
+  const cases = Object.values(data.tasks).filter((t: any) => t.type === 'Case' || t.subject);
 
-  const newCases = caseData.filter(c => c.status === 'New').length;
-  const workingCases = caseData.filter(c => c.status === 'Working').length;
-  const closedCases = caseData.filter(c => c.status === 'Closed').length;
-  const openCases = caseData.filter(c => c.status !== 'Closed').length;
+  const filteredCases = filter === 'all' 
+    ? cases 
+    : cases.filter((c: any) => c.status === filter);
+
+  const newCases = cases.filter((c: any) => c.status === 'New').length;
+  const workingCases = cases.filter((c: any) => c.status === 'Working').length;
+  const closedCases = cases.filter((c: any) => c.status === 'Closed').length;
+  const openCases = cases.filter((c: any) => c.status !== 'Closed').length;
 
   const handleSave = (data: any) => {
-    console.log('New Case:', data);
+    const record = {
+      subject: data.subject,
+      relatedToType: 'Account',
+      relatedToId: data.accountId,
+      whoId: data.contactId,
+      priority: data.priority,
+      type: data.type,
+      status: 'New',
+      ownerId: 'user_001',
+    };
+    saveRecord('tasks', record);
   };
 
   return (
@@ -85,13 +89,16 @@ export default function CasePipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Cases</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Customer support case management.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Case
-        </button>
+        <BulkUpload
+          objectType="Case"
+          onUpload={async (data) => {
+            for (const item of data) {
+              await saveRecord('tasks', { ...item, type: 'Case', ownerId: 'user_001' });
+            }
+          }}
+          onExport={() => Object.values(data.tasks).filter((t: any) => t.type === 'Case')}
+          fields={['subject', 'description', 'status', 'priority', 'dueDate', 'accountId']}
+        />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
