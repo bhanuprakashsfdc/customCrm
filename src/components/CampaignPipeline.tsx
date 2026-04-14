@@ -66,7 +66,7 @@ export default function CampaignPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Budget</span>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(totalBudget, config.localization.currency)}</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalBudget, config.localization.currency, config.localization.showAllCurrencies)}</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -87,7 +87,7 @@ export default function CampaignPipeline() {
             <TrendingUp className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Revenue</span>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue, config.localization.currency)}</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue, config.localization.currency, config.localization.showAllCurrencies)}</p>
         </div>
       </div>
 
@@ -142,11 +142,11 @@ export default function CampaignPipeline() {
                       {campaign.status}
                     </span>
                   </td>
-                  <td className="p-4 text-white">{formatCurrency(campaign.budget, config.localization.currency)}</td>
+                  <td className="p-4 text-white">{formatCurrency(campaign.budget, config.localization.currency, config.localization.showAllCurrencies)}</td>
                   <td className="p-4 text-white">{campaign.leads.toLocaleString()}</td>
                   <td className="p-4 text-white">{campaign.contacts.toLocaleString()}</td>
                   <td className="p-4 text-emerald-400">{campaign.converted}</td>
-                  <td className="p-4 text-white">{formatCurrency(campaign.revenue, config.localization.currency)}</td>
+                  <td className="p-4 text-white">{formatCurrency(campaign.revenue, config.localization.currency, config.localization.showAllCurrencies)}</td>
                   <td className="p-4 text-slate-400 text-sm">
                     {campaign.startDate} - {campaign.endDate}
                   </td>

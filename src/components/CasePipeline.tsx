@@ -97,6 +97,7 @@ export default function CasePipeline() {
             }
           }}
           onExport={() => Object.values(data.tasks).filter((t: any) => t.type === 'Case')}
+          onNew={() => setModalOpen(true)}
           fields={['subject', 'description', 'status', 'priority', 'dueDate', 'accountId']}
         />
       </div>

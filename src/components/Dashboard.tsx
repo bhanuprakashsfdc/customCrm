@@ -75,7 +75,7 @@ export default function Dashboard() {
             <p className="text-xs uppercase tracking-widest font-bold text-slate-500">Pipeline Value</p>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
-          <h3 className="text-3xl font-bold text-white">{formatCurrency(pipelineValue)}</h3>
+          <h3 className="text-3xl font-bold text-white">{formatCurrency(pipelineValue, config.localization.currency, config.localization.showAllCurrencies)}</h3>
           <ResponsiveContainer width="100%" height={40}>
             <AreaChart data={growthData.slice(-3)}>
               <Area dataKey="value" stroke="#10b981" strokeWidth={2} fill="transparent" />
@@ -162,7 +162,7 @@ export default function Dashboard() {
               {topDeals.map((opp, i) => (
                 <tr key={i} className="hover:bg-white/5">
                   <td className="py-3 font-medium">{opp.accountName || 'N/A'}</td>
-                  <td className="py-3">{formatCurrency(opp.amount || 0, config.localization.currency)}</td>
+                  <td className="py-3">{formatCurrency(opp.amount || 0, config.localization.currency, config.localization.showAllCurrencies)}</td>
                   <td className="py-3">
                     <span className="px-2 py-1 rounded text-xs bg-primary/10 text-primary">
                       {opp.stageName || 'N/A'}

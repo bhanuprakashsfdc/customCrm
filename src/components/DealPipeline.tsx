@@ -95,6 +95,7 @@ export default function DealPipeline() {
               }
             }}
             onExport={() => opportunities}
+            onNew={() => setModalOpen(true)}
             fields={['name', 'value', 'stageName', 'probability', 'closeDate', 'accountId', 'contactId']}
           />
         </div>
@@ -106,7 +107,7 @@ export default function DealPipeline() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Pipeline Value</span>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(totalAmount / 1000, config.localization.currency)}K</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalAmount / 1000, config.localization.currency, config.localization.showAllCurrencies)}K</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">
@@ -120,7 +121,7 @@ export default function DealPipeline() {
             <CheckCircle2 className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Won Value</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(wonAmount / 1000, config.localization.currency)}K</p>
+          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(wonAmount / 1000, config.localization.currency, config.localization.showAllCurrencies)}K</p>
         </div>
         <div className="bg-surface-container-low p-4 rounded-2xl border border-white/5">
           <div className="flex items-center gap-2 text-slate-500 mb-2">

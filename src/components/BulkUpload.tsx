@@ -6,6 +6,7 @@ interface BulkUploadProps {
   onUpload: (data: any[]) => Promise<void>;
   onExport: () => any[];
   fields: string[];
+  onNew?: () => void;
 }
 
 interface ImportResult {
@@ -14,8 +15,9 @@ interface ImportResult {
   message: string;
 }
 
-export default function BulkUpload({ objectType, onUpload, onExport, fields }: BulkUploadProps) {
+export default function BulkUpload({ objectType, onUpload, onExport, fields, onNew }: BulkUploadProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState<ImportResult[]>([]);
@@ -128,14 +130,14 @@ export default function BulkUpload({ objectType, onUpload, onExport, fields }: B
           Import
         </button>
         <button
-          onClick={handleExport}
+          onClick={() => setIsOpen(true)}
           className="px-3 py-2 bg-surface-container-high text-slate-300 text-xs font-bold rounded-none flex items-center gap-2 hover:bg-surface-container-high/80 transition-colors -ml-[1px]"
         >
           <Download className="w-4 h-4" />
           Export
         </button>
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={onNew}
           className="px-3 py-2 bg-primary text-on-primary text-xs font-bold rounded-r-lg flex items-center gap-2 hover:bg-primary/90 transition-colors -ml-[1px]"
         >
           <Plus className="w-4 h-4" />
@@ -152,8 +154,8 @@ export default function BulkUpload({ objectType, onUpload, onExport, fields }: B
       <div className="relative w-full max-w-2xl max-h-[80vh] bg-surface-container rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-bold text-white">Bulk {objectType} - Import/Export</h3>
+<FileSpreadsheet className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-bold text-white">Import/Export {objectType}</h3>
           </div>
           <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-white">
             <X className="w-5 h-5" />

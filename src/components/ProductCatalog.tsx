@@ -78,7 +78,7 @@ export default function ProductCatalog() {
             <DollarSign className="w-4 h-4" />
             <span className="text-xs font-bold uppercase tracking-widest">Avg Price</span>
           </div>
-          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue / activeProducts, config.localization.currency)}</p>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalValue / activeProducts, config.localization.currency, config.localization.showAllCurrencies)}</p>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export default function ProductCatalog() {
                 </span>
               )}
             </div>
-            <p className="text-lg font-bold text-white">{formatCurrency(product.unitPrice, config.localization.currency)}</p>
+            <p className="text-lg font-bold text-white">{formatCurrency(product.unitPrice, config.localization.currency, config.localization.showAllCurrencies)}</p>
             <p className="text-xs text-slate-500 mt-2 line-clamp-2">{product.description}</p>
           </div>
         ))}
