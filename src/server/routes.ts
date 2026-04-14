@@ -110,6 +110,155 @@ router.post(`/${type}`, authUser, async (req: Request, res: Response) => {
   });
 }
 
+// Search endpoints for accounts and contacts (auto-suggest/lookup)
+router.get('/accounts/search', authUser, async (req: Request, res: Response) => {
+  try {
+    const pool = getPool();
+    const q = (req.query.q as string) || '';
+    const limit = parseInt(req.query.limit as string) || 10;
+    let sql = 'SELECT id, name, email, phone FROM accounts';
+    let params: any[] = [];
+    if (q) {
+      sql += ' WHERE name LIKE ? OR email LIKE ? OR phone LIKE ?';
+      const searchTerm = `%${q}%`;
+      params = [searchTerm, searchTerm, searchTerm];
+    }
+    sql += ' LIMIT ?';
+    params.push(limit);
+    const [rows]: any = await pool.query(sql, params);
+    res.json({ data: rows });
+  } catch (error) {
+    console.error('Error searching accounts:', error);
+    res.status(500).json({ error: 'Failed to search accounts' });
+  }
+});
+
+router.get('/accounts/lookup/:id', authUser, async (req: Request, res: Response) => {
+  try {
+    const pool = getPool();
+    const [rows]: any = await pool.execute('SELECT id, name, email, phone, industry, website FROM accounts WHERE id = ?', [req.params.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error looking up account:', error);
+    res.status(500).json({ error: 'Failed to lookup account' });
+  }
+});
+
+router.get('/contacts/search', authUser, async (req: Request, res: Response) => {
+  try {
+    const pool = getPool();
+    const q = (req.query.q as string) || '';
+    const accountId = req.query.accountId as string;
+    const limit = parseInt(req.query.limit as string) || 10;
+    let sql = 'SELECT id, firstName, lastName, email, phone, accountId, position FROM contacts';
+    const params: any[] = [];
+    if (q || accountId) {
+      const conditions: string[] = [];
+      if (q) {
+        conditions.push('(firstName LIKE ? OR lastName LIKE ? OR email LIKE ? OR phone LIKE ?)');
+        const searchTerm = `%${q}%`;
+        params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      }
+      if (accountId) {
+        conditions.push('accountId = ?');
+        params.push(accountId);
+      }
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' LIMIT ?';
+    params.push(limit);
+    const [rows]: any = await pool.query(sql, params);
+    res.json({ data: rows });
+  } catch (error) {
+    console.error('Error searching contacts:', error);
+    res.status(500).json({ error: 'Failed to search contacts' });
+  }
+});
+
+router.get('/contacts/lookup/:id', authUser, async (req: Request, res: Response) => {
+  try {
+    const pool = getPool();
+    const [rows]: any = await pool.execute(
+      'SELECT c.*, a.name as accountName FROM contacts c LEFT JOIN accounts a ON c.accountId = a.id WHERE c.id = ?',
+      [req.params.id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error looking up contact:', error);
+    res.status(500).json({ error: 'Failed to lookup contact' });
+  }
+});
+
+// Search endpoints for other objects by accountId/contactId
+const linkedObjects = ['tasks', 'events', 'campaigns', 'cases', 'quotes', 'orders', 'contracts'];
+for (const type of linkedObjects) {
+  router.get(`/${type}/by-account/:accountId`, authUser, async (req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const limit = parseInt(req.query.limit as string) || 100;
+      const [rows]: any = await pool.query(
+        `SELECT * FROM ${type} WHERE accountId = ? LIMIT ?`,
+        [req.params.accountId, limit]
+      );
+      res.json({ data: rows });
+    } catch (error) {
+      console.error(`Error fetching ${type} by account:`, error);
+      res.status(500).json({ error: `Failed to fetch ${type}` });
+    }
+  });
+
+  router.get(`/${type}/by-contact/:contactId`, authUser, async (req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const limit = parseInt(req.query.limit as string) || 100;
+      const [rows]: any = await pool.query(
+        `SELECT * FROM ${type} WHERE contactId = ? LIMIT ?`,
+        [req.params.contactId, limit]
+      );
+      res.json({ data: rows });
+    } catch (error) {
+      console.error(`Error fetching ${type} by contact:`, error);
+      res.status(500).json({ error: `Failed to fetch ${type}` });
+    }
+  });
+
+  router.get(`/${type}/search`, authUser, async (req: Request, res: Response) => {
+    try {
+      const pool = getPool();
+      const accountId = req.query.accountId as string;
+      const contactId = req.query.contactId as string;
+      const limit = parseInt(req.query.limit as string) || 100;
+      let sql = `SELECT * FROM ${type}`;
+      const params: any[] = [];
+      const conditions: string[] = [];
+      if (accountId) {
+        conditions.push('accountId = ?');
+        params.push(accountId);
+      }
+      if (contactId) {
+        conditions.push('contactId = ?');
+        params.push(contactId);
+      }
+      if (conditions.length > 0) {
+        sql += ' WHERE ' + conditions.join(' AND ');
+      }
+      sql += ' LIMIT ?';
+      params.push(limit);
+      const [rows]: any = await pool.query(sql, params);
+      res.json({ data: rows });
+    } catch (error) {
+      console.error(`Error searching ${type}:`, error);
+      res.status(500).json({ error: `Failed to search ${type}` });
+    }
+  });
+}
+
 // Config routes
 router.get('/config', authUser, async (req: Request, res: Response) => {
   try {

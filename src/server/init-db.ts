@@ -66,11 +66,15 @@ export async function initializeDatabase() {
       status VARCHAR(255),
       priority VARCHAR(255),
       dueDate DATE,
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       relatedToType VARCHAR(255),
       relatedToId VARCHAR(255),
       assignedTo VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS events (
       id VARCHAR(255) PRIMARY KEY,
@@ -79,10 +83,14 @@ export async function initializeDatabase() {
       startDate DATETIME,
       endDate DATETIME,
       location VARCHAR(255),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       relatedToType VARCHAR(255),
       relatedToId VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS campaigns (
       id VARCHAR(255) PRIMARY KEY,
@@ -92,8 +100,27 @@ export async function initializeDatabase() {
       startDate DATE,
       endDate DATE,
       budget DECIMAL(15,2),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
       createdAt DATETIME,
-      updatedAt DATETIME
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS cases (
+      id VARCHAR(255) PRIMARY KEY,
+      caseNumber VARCHAR(255),
+      subject VARCHAR(255),
+      description TEXT,
+      status VARCHAR(255),
+      priority VARCHAR(255),
+      accountId VARCHAR(255),
+      contactId VARCHAR(255),
+      assignedTo VARCHAR(255),
+      createdAt DATETIME,
+      updatedAt DATETIME,
+      FOREIGN KEY (accountId) REFERENCES accounts(id),
+      FOREIGN KEY (contactId) REFERENCES contacts(id)
     )`,
     `CREATE TABLE IF NOT EXISTS quotes (
       id VARCHAR(255) PRIMARY KEY,
