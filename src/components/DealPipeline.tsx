@@ -15,6 +15,7 @@ import {
   Target
 } from 'lucide-react';
 import RecordModal from './RecordModal';
+import BulkUpload from './BulkUpload';
 
 const stageColors: Record<string, string> = {
   'Prospecting': 'bg-slate-500/20 text-slate-400',
@@ -84,13 +85,18 @@ export default function DealPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Opportunities</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Deal pipeline and sales tracking.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Opportunity
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Opportunity"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('opportunities', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => opportunities}
+            fields={['name', 'value', 'stageName', 'probability', 'closeDate', 'accountId', 'contactId']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

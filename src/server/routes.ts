@@ -51,9 +51,9 @@ for (const type of objectTypes) {
       const values = Object.values(record);
       const placeholders = fields.map(() => '?').join(', ');
       
-      await pool.execute(
+      await pool.query(
         `INSERT INTO ${type} (${fields.join(', ')}) VALUES (${placeholders})`,
-        values
+        values as any
       );
       res.status(201).json(record);
     } catch (error) {
@@ -73,9 +73,9 @@ for (const type of objectTypes) {
       
       const setClause = fields.map(f => `${f} = ?`).join(', ');
       
-      await pool.execute(
+      await pool.query(
         `UPDATE ${type} SET ${setClause} WHERE id = ?`,
-        [...values, req.params.id]
+        [...values, req.params.id] as any
       );
       res.json(record);
     } catch (error) {

@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   Headphones,
-  ShoppingCart
+  ShoppingCart,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -28,6 +29,8 @@ interface LayoutProps {
   children: React.ReactNode;
   activeScreen: string;
   onScreenChange: (screen: string) => void;
+  user?: { id: string; name: string; email: string; role: string };
+  onLogout?: () => void;
 }
 
 const navItems = [
@@ -43,9 +46,10 @@ const navItems = [
   { id: 'automations', label: 'Automations', icon: Zap },
 ];
 
-export default function Layout({ children, activeScreen, onScreenChange }: LayoutProps) {
+export default function Layout({ children, activeScreen, onScreenChange, user, onLogout }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { config } = useConfig();
 
   return (
@@ -169,9 +173,34 @@ export default function Layout({ children, activeScreen, onScreenChange }: Layou
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-0 right-0 w-2 h-2 bg-primary rounded-full border-2 border-background" />
               </button>
-              <button className="hover:text-indigo-300 transition-all">
-                <UserCircle className="w-6 h-6" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 hover:text-indigo-300 transition-all"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-container rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                </button>
+                {userMenuOpen && user && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-surface-container border border-white/10 rounded-xl shadow-xl py-2 z-50">
+                    <div className="px-4 py-2 border-b border-white/5">
+                      <p className="text-sm font-medium text-white">{user.name}</p>
+                      <p className="text-xs text-slate-400">{user.email}</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        onLogout?.();
+                        setUserMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>

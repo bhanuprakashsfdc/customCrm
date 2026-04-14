@@ -15,6 +15,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Planned': 'bg-slate-500/20 text-slate-400',
@@ -25,7 +26,7 @@ const statusColors: Record<string, string> = {
 
 export default function CampaignPipeline() {
   const { config } = useConfig();
-  const { data } = useData();
+  const { data, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
 
   const campaigns = Object.values(data.campaigns);
@@ -46,10 +47,16 @@ export default function CampaignPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Campaigns</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Marketing campaigns and campaign analytics.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Campaign
-        </button>
+        <BulkUpload
+          objectType="Campaign"
+          onUpload={async (data) => {
+            for (const item of data) {
+              await saveRecord('campaigns', { ...item, ownerId: 'user_001' });
+            }
+          }}
+          onExport={() => Object.values(data.campaigns)}
+          fields={['name', 'type', 'status', 'startDate', 'endDate', 'budget']}
+        />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

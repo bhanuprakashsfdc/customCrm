@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Building2, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
 interface LoginPageProps {
@@ -9,6 +9,8 @@ interface LoginPageProps {
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
   const navigate = useNavigate();
+  const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -47,19 +49,31 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     }
   };
 
-  const handleRegister = async () => {
-    if (!email || !password) {
-      setError('Please enter email and password');
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password) {
+      setError('Please enter name, email and password');
       return;
     }
 
     setLoading(true);
+    setError('');
     try {
+      const checkRes = await fetch('/api/users');
+      const users = await checkRes.json();
+      const existing = users.find((u: any) => u.email === email);
+      
+      if (existing) {
+        setError('Email already registered. Please login.');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: email.split('@')[0],
+          name,
           email,
           password,
           role: 'admin',
@@ -71,7 +85,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         onLogin({ id: user.id, name: user.name, email: user.email, role: user.role });
         navigate('/');
       } else {
-        setError('Registration failed');
+        setError('Registration failed. Please try again.');
       }
     } catch (err) {
       setError('Failed to register');
@@ -91,10 +105,27 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               <Building2 className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-white">CRM</h1>
-            <p className="text-slate-400 mt-2">Sign in to your account</p>
+            <p className="text-slate-400 mt-2">{isRegister ? 'Create your account' : 'Sign in to your account'}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={isRegister ? handleRegister : handleSubmit} className="space-y-6">
+            {isRegister && (
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                    placeholder="Enter your name"
+                    required={isRegister}
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
               <div className="relative">
@@ -148,17 +179,24 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 loading && "opacity-50 cursor-not-allowed"
               )}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? (isRegister ? 'Creating account...' : 'Signing in...') : (isRegister ? 'Create Account' : 'Sign In')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button
-              onClick={handleRegister}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError('');
+              }}
               disabled={loading}
               className="text-slate-400 hover:text-slate-300 text-sm"
             >
-              Don't have an account? <span className="text-blue-400">Register</span>
+              {isRegister ? (
+                <>Already have an account? <span className="text-blue-400">Sign In</span></>
+              ) : (
+                <>Don't have an account? <span className="text-blue-400">Register</span></>
+              )}
             </button>
           </div>
         </div>

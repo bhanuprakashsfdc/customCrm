@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConfigProvider } from './context/ConfigContext';
 import { DataProvider } from './context/DataContext';
 import Layout from './components/Layout';
@@ -9,6 +9,9 @@ import ContactDetail from './components/ContactDetail';
 import DealPipeline from './components/DealPipeline';
 import OrderPipeline from './components/OrderPipeline';
 import CasePipeline from './components/CasePipeline';
+import LoginPage from './components/LoginPage';
+
+const AUTH_KEY = 'crm_auth';
 
 export default function App() {
   return (
@@ -22,6 +25,30 @@ export default function App() {
 
 function AppContent() {
   const [activeScreen, setActiveScreen] = useState('dashboard');
+  const [user, setUser] = useState<{ id: string; name: string; email: string; role: string } | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(AUTH_KEY);
+    if (saved) {
+      try {
+        setUser(JSON.parse(saved));
+      } catch {}
+    }
+  }, []);
+
+  const handleLogin = (userData: { id: string; name: string; email: string; role: string }) => {
+    setUser(userData);
+    localStorage.setItem(AUTH_KEY, JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem(AUTH_KEY);
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   const renderScreen = () => {
     switch (activeScreen) {
@@ -52,7 +79,7 @@ function AppContent() {
   };
 
   return (
-    <Layout activeScreen={activeScreen} onScreenChange={setActiveScreen}>
+    <Layout activeScreen={activeScreen} onScreenChange={setActiveScreen} user={user} onLogout={handleLogout}>
       {renderScreen()}
     </Layout>
   );

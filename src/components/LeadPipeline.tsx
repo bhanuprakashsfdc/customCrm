@@ -8,13 +8,10 @@ import {
   DollarSign, 
   Users,
   Calendar,
-  Plus,
   MoreHorizontal,
-  CheckCircle2,
-  Clock,
-  Briefcase
+  CheckCircle2
 } from 'lucide-react';
-import RecordModal from './RecordModal';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'New': 'bg-blue-500/20 text-blue-400',
@@ -44,7 +41,6 @@ export default function LeadPipeline() {
   const { config } = useConfig();
   const { leads, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
-  const [modalOpen, setModalOpen] = useState(false);
 
   const filteredLeads = filter === 'all' 
     ? leads 
@@ -73,24 +69,21 @@ export default function LeadPipeline() {
 
   return (
     <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-      <RecordModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        objectType="lead"
-        onSave={handleSave}
-      />
       <div className="flex flex-col sm:flex-row justify-between items-end gap-4">
         <div>
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Leads</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Lead management and conversion tracking.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Lead
-        </button>
+        <BulkUpload
+          objectType="Lead"
+          onUpload={async (data) => {
+            for (const item of data) {
+              await saveRecord('leads', { ...item, ownerId: 'user_001' });
+            }
+          }}
+          onExport={() => leads}
+          fields={['firstName', 'lastName', 'company', 'title', 'email', 'phone', 'status', 'rating', 'source']}
+        />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

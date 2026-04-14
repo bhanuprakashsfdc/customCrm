@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Clock
 } from 'lucide-react';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -30,7 +31,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function ContractPipeline() {
   const { config } = useConfig();
-  const { data, getAccountName } = useData();
+  const { data, saveRecord, getAccountName } = useData();
   const [filter, setFilter] = useState('all');
 
   const contracts = Object.values(data.contracts);
@@ -50,10 +51,18 @@ export default function ContractPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Contracts</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Contract lifecycle management and renewals.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Contract
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Contract"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('contracts', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.contracts)}
+            fields={['contractNumber', 'accountId', 'value', 'startDate', 'endDate', 'status']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

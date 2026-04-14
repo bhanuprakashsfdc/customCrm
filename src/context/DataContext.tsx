@@ -1,7 +1,22 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { StorageData } from '@/src/lib/storage';
 
 const API_BASE = '/api';
+
+interface StorageData {
+  accounts: Record<string, any>;
+  contacts: Record<string, any>;
+  leads: Record<string, any>;
+  opportunities: Record<string, any>;
+  tasks: Record<string, any>;
+  events: Record<string, any>;
+  campaigns: Record<string, any>;
+  quotes: Record<string, any>;
+  orders: Record<string, any>;
+  contracts: Record<string, any>;
+  products: Record<string, any>;
+  users: Record<string, any>;
+  lastUpdated: string;
+}
 
 interface DataContextType {
   data: StorageData;

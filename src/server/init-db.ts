@@ -24,6 +24,10 @@ export async function initializeDatabase() {
       phone VARCHAR(255),
       accountId VARCHAR(255),
       position VARCHAR(255),
+      department VARCHAR(255),
+      contactRole VARCHAR(255),
+      isPrimary BOOLEAN,
+      ownerId VARCHAR(255),
       createdAt DATETIME,
       updatedAt DATETIME,
       FOREIGN KEY (accountId) REFERENCES accounts(id)
@@ -143,6 +147,7 @@ export async function initializeDatabase() {
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255),
       email VARCHAR(255),
+      password VARCHAR(255),
       role VARCHAR(255),
       createdAt DATETIME,
       updatedAt DATETIME

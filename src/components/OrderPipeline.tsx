@@ -15,6 +15,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import RecordModal from './RecordModal';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -72,13 +73,18 @@ export default function OrderPipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Orders</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Order processing and fulfillment.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Order
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Order"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('orders', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.orders)}
+            fields={['orderNumber', 'accountId', 'quoteId', 'total', 'status', 'orderDate']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

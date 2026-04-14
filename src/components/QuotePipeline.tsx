@@ -14,6 +14,7 @@ import {
   XCircle,
   Send
 } from 'lucide-react';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'Draft': 'bg-slate-500/20 text-slate-400',
@@ -33,7 +34,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 
 export default function QuotePipeline() {
   const { config } = useConfig();
-  const { data } = useData();
+  const { data, saveRecord } = useData();
   const [filter, setFilter] = useState('all');
 
   const quotes = Object.values(data.quotes);
@@ -53,10 +54,18 @@ export default function QuotePipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Quotes</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Quote management and pricing proposals.</p>
         </div>
-        <button className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" />
-          New Quote
-        </button>
+        <div className="flex flex-col sm:flex-row items-end gap-0">
+          <BulkUpload
+            objectType="Quote"
+            onUpload={async (data) => {
+              for (const item of data) {
+                await saveRecord('quotes', { ...item, ownerId: 'user_001' });
+              }
+            }}
+            onExport={() => Object.values(data.quotes)}
+            fields={['quoteNumber', 'accountId', 'opportunityId', 'total', 'status', 'validUntil']}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

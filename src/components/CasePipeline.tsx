@@ -15,6 +15,7 @@ import {
   Send
 } from 'lucide-react';
 import RecordModal from './RecordModal';
+import BulkUpload from './BulkUpload';
 
 const statusColors: Record<string, string> = {
   'New': 'bg-blue-500/20 text-blue-400',
@@ -88,13 +89,16 @@ export default function CasePipeline() {
           <h2 className="text-2xl lg:text-4xl font-extrabold font-headline tracking-tight text-white">Cases</h2>
           <p className="text-on-surface-variant mt-1 text-sm">Customer support case management.</p>
         </div>
-        <button 
-          onClick={() => setModalOpen(true)}
-          className="px-4 py-2 bg-primary text-on-primary text-xs font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Case
-        </button>
+        <BulkUpload
+          objectType="Case"
+          onUpload={async (data) => {
+            for (const item of data) {
+              await saveRecord('tasks', { ...item, type: 'Case', ownerId: 'user_001' });
+            }
+          }}
+          onExport={() => Object.values(data.tasks).filter((t: any) => t.type === 'Case')}
+          fields={['subject', 'description', 'status', 'priority', 'dueDate', 'accountId']}
+        />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
